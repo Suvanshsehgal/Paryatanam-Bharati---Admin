@@ -101,8 +101,40 @@ export const Login = () => {
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-zinc-50 dark:bg-slate-950 text-zinc-900 dark:text-zinc-100 font-sans relative">
       <ToastContainer />
 
-      {/* Theme Toggle Floating Button */}
-      <div className="absolute top-6 right-6 z-30">
+      {/* Top Header Bar for Mobile (Visible on Mobile & Tablet, Hidden on Desktop) */}
+      <div className="flex lg:hidden items-center justify-between px-5 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-zinc-200/80 dark:border-slate-800 sticky top-0 z-30">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center text-white shadow-sm">
+            <Compass className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-xs font-bold tracking-tight text-zinc-900 dark:text-white leading-none">Paryatanam Bharati</h1>
+            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">Admin Portal</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label="Toggle dark/light mode"
+          className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-100 dark:bg-slate-800 text-zinc-700 dark:text-zinc-300 text-xs font-medium hover:bg-zinc-200 dark:hover:bg-slate-700 transition-colors"
+        >
+          {theme === 'dark' ? (
+            <>
+              <Sun className="w-4 h-4 text-amber-400" />
+              <span className="hidden xs:inline text-[11px]">Light</span>
+            </>
+          ) : (
+            <>
+              <Moon className="w-4 h-4 text-indigo-500" />
+              <span className="hidden xs:inline text-[11px]">Dark</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Theme Toggle Floating Button for Desktop */}
+      <div className="hidden lg:block absolute top-6 right-6 z-30">
         <button
           type="button"
           onClick={toggleTheme}
@@ -122,7 +154,7 @@ export const Login = () => {
         </button>
       </div>
 
-      {/* Left Split: Minimal Soft Hero Branding */}
+      {/* Left Split: Minimal Soft Hero Branding (Desktop Only) */}
       <div className="lg:w-6/12 relative hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-orange-50 via-zinc-50 to-amber-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 border-r border-zinc-200/60 dark:border-slate-800/60">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-white shadow-sm">
@@ -148,15 +180,16 @@ export const Login = () => {
         </div>
       </div>
 
-      {/* Right Split: Pure Backend Form */}
-      <div className="lg:w-6/12 flex items-center justify-center p-6 sm:p-12">
-        <div className="w-full max-w-sm space-y-6">
-          <div className="text-center space-y-1">
-            <div className="inline-flex lg:hidden w-10 h-10 rounded-xl bg-orange-500 items-center justify-center text-white shadow-sm mb-2">
-              <Compass className="w-6 h-6" />
+      {/* Right Split: Login Form Container */}
+      <div className="lg:w-6/12 flex-1 flex flex-col items-center justify-center px-4 py-8 sm:px-8 sm:py-12">
+        <div className="w-full max-w-sm bg-white dark:bg-slate-900 lg:bg-transparent lg:dark:bg-transparent border border-zinc-200/80 dark:border-slate-800/80 lg:border-0 rounded-2xl lg:rounded-none p-6 sm:p-8 lg:p-0 shadow-xl shadow-zinc-200/50 dark:shadow-none lg:shadow-none space-y-6">
+          
+          <div className="text-center space-y-1.5">
+            <div className="inline-flex lg:hidden w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-600 dark:text-orange-400 items-center justify-center mb-1">
+              <Compass className="w-7 h-7" />
             </div>
-            <h2 className="text-xl font-bold tracking-tight">Admin Sign In</h2>
-            <p className="text-xs text-zinc-500">Access the admin management console</p>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">Admin Sign In</h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Access the admin management console</p>
           </div>
 
           {apiError && (
@@ -167,19 +200,19 @@ export const Login = () => {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                 Email Address
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
                   <Mail className="w-4 h-4" />
                 </div>
                 <input
                   type="email"
                   {...register('email')}
                   placeholder="admin@paryatanam.gov.in"
-                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-zinc-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all"
+                  className="w-full pl-10 pr-3.5 py-2.5 sm:py-2 text-xs sm:text-sm rounded-xl border border-zinc-200 dark:border-slate-800 bg-zinc-50/50 dark:bg-slate-950/50 lg:bg-white lg:dark:bg-slate-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500 transition-all"
                 />
               </div>
               {errors.email && (
@@ -187,24 +220,25 @@ export const Login = () => {
               )}
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                 Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   {...register('password')}
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-9 py-2 text-xs rounded-xl border border-zinc-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all"
+                  className="w-full pl-10 pr-10 py-2.5 sm:py-2 text-xs sm:text-sm rounded-xl border border-zinc-200 dark:border-slate-800 bg-zinc-50/50 dark:bg-slate-950/50 lg:bg-white lg:dark:bg-slate-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:border-orange-500 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 focus:outline-none"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -214,21 +248,21 @@ export const Login = () => {
               )}
             </div>
 
-            <div className="flex items-center justify-between text-xs">
-              <label className="flex items-center space-x-2 cursor-pointer">
+            <div className="flex items-center justify-between text-xs pt-1">
+              <label className="flex items-center space-x-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   {...register('rememberMe')}
-                  className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-slate-700 text-orange-600 focus:ring-orange-500"
+                  className="w-4 h-4 rounded border-zinc-300 dark:border-slate-700 text-orange-600 focus:ring-orange-500 accent-orange-600"
                 />
-                <span className="text-zinc-600 dark:text-zinc-400">Remember session</span>
+                <span className="text-zinc-600 dark:text-zinc-400 font-medium text-xs">Remember session</span>
               </label>
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-sm flex items-center justify-center space-x-2 disabled:opacity-50"
+              className="w-full py-3 sm:py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-orange-600 hover:bg-orange-700 active:scale-[0.99] transition-all shadow-md shadow-orange-600/20 flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -241,7 +275,13 @@ export const Login = () => {
             </button>
           </form>
         </div>
+
+        {/* Footer for Mobile View */}
+        <div className="lg:hidden mt-8 text-center text-[11px] text-zinc-400 dark:text-zinc-500">
+          © 2026 Government of India • Paryatanam Admin
+        </div>
       </div>
     </div>
   );
 };
+
