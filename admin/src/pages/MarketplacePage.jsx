@@ -285,17 +285,17 @@ export const MarketplacePage = () => {
                 return (
                   <div
                     key={product.id}
-                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between"
+                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4 flex flex-col justify-between"
                   >
-                    <div className="flex items-start space-x-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                       <img
                         src={product.primary_image}
                         alt={product.name}
-                        className="w-24 h-24 rounded-xl object-cover border border-slate-100 dark:border-slate-800 flex-shrink-0"
+                        className="w-full sm:w-24 h-40 sm:h-24 rounded-xl object-cover border border-slate-100 dark:border-slate-800 flex-shrink-0"
                       />
 
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0 space-y-1 w-full">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <StatusBadge status={product.status} />
                           <button
                             onClick={() => handleToggleCertify(product)}
@@ -317,7 +317,7 @@ export const MarketplacePage = () => {
 
                         <p className="text-xs text-slate-500 font-mono">Vendor ID: {product.vendor_id}</p>
 
-                        <div className="flex items-center space-x-3 text-xs pt-1">
+                        <div className="flex flex-wrap items-center space-x-3 text-xs pt-1">
                           <span className="font-extrabold text-slate-900 dark:text-white">
                             {formatCurrency(product.price)}
                           </span>

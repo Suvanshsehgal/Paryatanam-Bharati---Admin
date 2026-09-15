@@ -57,7 +57,7 @@ const SortableSectionItem = ({ section, onAddSlide, onAddItem }) => {
       className="bg-white dark:bg-slate-900 border border-zinc-200/70 dark:border-slate-800/80 rounded-2xl p-5 shadow-2xs space-y-4"
     >
       {/* Header Bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center space-x-3">
           <div
             {...attributes}
@@ -68,7 +68,7 @@ const SortableSectionItem = ({ section, onAddSlide, onAddItem }) => {
             <GripVertical className="w-4.5 h-4.5" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/60">
                 {section.section_type}
               </span>
@@ -80,7 +80,7 @@ const SortableSectionItem = ({ section, onAddSlide, onAddItem }) => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-between sm:justify-end space-x-3 border-t sm:border-t-0 border-zinc-100 dark:border-slate-800 pt-2 sm:pt-0">
           <div className="flex items-center space-x-2 text-xs">
             <span className="text-zinc-400">Order: #{section.display_order}</span>
             <StatusBadge status={section.is_visible ? 'PUBLISHED' : 'DRAFT'} />

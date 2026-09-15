@@ -64,8 +64,8 @@ export const DataTable = ({
       </div>
 
       {/* Pagination Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-800 gap-4 bg-slate-50/40 dark:bg-slate-950/40">
-        <div className="flex items-center space-x-4 text-xs text-slate-500 dark:text-slate-400">
+      <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-100 dark:border-slate-800 gap-3 bg-slate-50/40 dark:bg-slate-950/40 text-center sm:text-left">
+        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-4 text-xs text-slate-500 dark:text-slate-400">
           <span>
             Showing <strong className="font-semibold text-slate-800 dark:text-slate-200">{startRecord}</strong> to{' '}
             <strong className="font-semibold text-slate-800 dark:text-slate-200">{endRecord}</strong> of{' '}
@@ -73,12 +73,12 @@ export const DataTable = ({
           </span>
 
           {onLimitChange && (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <span>Per page:</span>
               <select
                 value={limit}
                 onChange={(e) => onLimitChange(Number(e.target.value))}
-                className="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                className="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-orange-500 cursor-pointer"
               >
                 <option value={5}>5</option>
                 <option value={10}>10</option>
@@ -90,7 +90,7 @@ export const DataTable = ({
         </div>
 
         {onPageChange && (
-          <div className="flex items-center space-x-1.5">
+          <div className="flex items-center justify-center space-x-1">
             <button
               onClick={() => onPageChange(1)}
               disabled={page <= 1 || isLoading}
@@ -108,7 +108,7 @@ export const DataTable = ({
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            <span className="px-3 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <span className="px-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
               Page {page} of {total_pages || 1}
             </span>
 
