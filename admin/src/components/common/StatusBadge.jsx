@@ -13,6 +13,12 @@ export const StatusBadge = ({ status, className }) => {
     if (normalized === 'CERTIFIED') {
       styles += ' ring-2 ring-emerald-400/30 dark:ring-emerald-500/30 shadow-sm';
     }
+  } else if (normalized === 'ADMIN') {
+    styles = 'bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800/60';
+  } else if (normalized === 'OWNER') {
+    styles = 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60';
+  } else if (normalized === 'USER') {
+    styles = 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800/60';
   } else if (['PENDING', 'PENDING_REVIEW', 'NONE', 'DRAFT'].includes(normalized)) {
     styles = 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60';
   } else if (['REJECTED', 'SUSPENDED', 'BLOCKED', 'INACTIVE'].includes(normalized)) {

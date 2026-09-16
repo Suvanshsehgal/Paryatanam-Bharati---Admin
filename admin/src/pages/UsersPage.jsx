@@ -164,7 +164,7 @@ export const UsersPage = () => {
           User & Access Governance
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Manage system administrators, tour operators, artisans, vendors, and regional coordinators.
+          Manage platform users, system administrators, and business owners.
         </p>
       </div>
 
@@ -287,7 +287,7 @@ export const UsersPage = () => {
           statusModalUser?.status === 'active' ? 'suspend' : 'activate'
         } ${statusModalUser?.name}? ${
           statusModalUser?.status === 'active'
-            ? 'Suspended accounts will lose access to operator/vendor actions immediately.'
+            ? 'Suspended accounts will lose access to owner and platform actions immediately.'
             : 'Reactivating will restore full access to their registered privileges.'
         }`}
         confirmText={statusModalUser?.status === 'active' ? 'Suspend Account' : 'Reactivate Account'}

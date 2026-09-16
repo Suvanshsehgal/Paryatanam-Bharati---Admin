@@ -10,14 +10,12 @@ export const checkIsAdmin = (user) => {
 
   return roles.some((r) => {
     if (typeof r === 'string') {
-      return r.toUpperCase() === 'ADMIN';
+      const u = r.toUpperCase();
+      return u === 'ADMIN' || u === 'OWNER';
     }
     if (typeof r === 'object' && r !== null) {
-      return (
-        (r.role && String(r.role).toUpperCase() === 'ADMIN') ||
-        (r.name && String(r.name).toUpperCase() === 'ADMIN') ||
-        (r.value && String(r.value).toUpperCase() === 'ADMIN')
-      );
+      const roleStr = String(r.role || r.name || r.value || '').toUpperCase();
+      return roleStr === 'ADMIN' || roleStr === 'OWNER';
     }
     return false;
   });

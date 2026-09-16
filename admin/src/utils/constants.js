@@ -9,7 +9,7 @@ export const INDIAN_STATES = [
   'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
 ];
 
-export const USER_ROLES = ['USER', 'ADMIN', 'OPERATOR', 'VENDOR', 'COORDINATOR'];
+export const USER_ROLES = ['USER', 'ADMIN', 'OWNER'];
 
 export const HOME_SECTION_TYPES = [
   { label: 'Hero Carousel', value: 'HERO_CAROUSEL' },
