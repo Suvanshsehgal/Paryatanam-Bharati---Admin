@@ -33,9 +33,9 @@ export const TravelPage = () => {
   const [destForm, setDestForm] = useState({
     name: '',
     slug: '',
-    description: '',
     short_description: '',
-    state: 'Karnataka',
+    description: '',
+    state: '',
     country: 'India',
     location: '',
     primary_image_url: '',

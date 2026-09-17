@@ -33,25 +33,25 @@ export const WellnessPage = () => {
     short_description: '',
     address: '',
     city: '',
-    state: 'Uttarakhand',
+    state: '',
     country: 'India',
-    pincode: '249192',
-    phone: '+919812345678',
+    pincode: '',
+    phone: '',
     cover_image_url: '',
-    is_featured: true,
+    is_featured: false,
     is_published: true,
   });
 
   const [courseForm, setCourseForm] = useState({
     provider_id: '',
-    category_id: 'e9e9e88d-1180-4b2c-870c-28f733c89f98',
+    category_id: '',
     name: '',
     slug: '',
     short_description: '',
     description: '',
-    price: 4999.0,
-    duration_minutes: 240,
-    is_featured: true,
+    price: '',
+    duration_minutes: '',
+    is_featured: false,
     is_published: true,
   });
 

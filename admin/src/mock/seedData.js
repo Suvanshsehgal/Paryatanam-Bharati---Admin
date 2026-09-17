@@ -1,4 +1,4 @@
-// Pure backend mode: All mock seed data fallback datasets removed.
+=// Pure backend mode: All mock seed data fallback datasets removed.
 export const MOCK_USERS = [];
 export const MOCK_HOME_SECTIONS = [];
 export const MOCK_PRODUCTS_PENDING = [];

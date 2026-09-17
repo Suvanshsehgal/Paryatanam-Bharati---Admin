@@ -59,7 +59,7 @@ export const UsersPage = () => {
 
   const handleOpenRoleModal = (user) => {
     setRoleModalUser(user);
-    setSelectedRoles([...user.roles]);
+    setSelectedRoles([...(user.roles || [])]);
   };
 
   const handleToggleRoleCheckbox = (role) => {
@@ -75,7 +75,8 @@ export const UsersPage = () => {
 
   const handleConfirmStatusChange = () => {
     if (!statusModalUser) return;
-    const newStatus = statusModalUser.status === 'active' ? 'suspended' : 'active';
+    const isActive = statusModalUser.status?.toUpperCase() === 'ACTIVE';
+    const newStatus = isActive ? 'SUSPENDED' : 'ACTIVE';
     statusMutation.mutate({ userId: statusModalUser.id, status: newStatus });
   };
 
@@ -100,7 +101,7 @@ export const UsersPage = () => {
       accessorKey: 'roles',
       cell: (user) => (
         <div className="flex flex-wrap gap-1">
-          {user.roles.map((r) => (
+          {(user.roles || []).map((r) => (
             <StatusBadge key={r} status={r} className="text-[10px] py-0 px-2" />
           ))}
         </div>
@@ -119,40 +120,43 @@ export const UsersPage = () => {
     {
       header: 'Governance Actions',
       key: 'actions',
-      cell: (user) => (
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => handleOpenRoleModal(user)}
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center space-x-1 text-xs font-semibold"
-            title="Manage User Roles"
-          >
-            <Shield className="w-3.5 h-3.5 text-orange-500" />
-            <span>Roles</span>
-          </button>
+      cell: (user) => {
+        const isActive = user.status?.toUpperCase() === 'ACTIVE';
+        return (
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => handleOpenRoleModal(user)}
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center space-x-1 text-xs font-semibold"
+              title="Manage User Roles"
+            >
+              <Shield className="w-3.5 h-3.5 text-orange-500" />
+              <span>Roles</span>
+            </button>
 
-          <button
-            onClick={() => setStatusModalUser(user)}
-            className={`p-1.5 rounded-lg border transition-colors flex items-center space-x-1 text-xs font-semibold ${
-              user.status === 'active'
-                ? 'border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-950 dark:hover:bg-rose-950/50'
-                : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-950 dark:hover:bg-emerald-950/50'
-            }`}
-            title={user.status === 'active' ? 'Suspend user' : 'Activate user'}
-          >
-            {user.status === 'active' ? (
-              <>
-                <UserX className="w-3.5 h-3.5" />
-                <span>Suspend</span>
-              </>
-            ) : (
-              <>
-                <UserCheck className="w-3.5 h-3.5" />
-                <span>Activate</span>
-              </>
-            )}
-          </button>
-        </div>
-      ),
+            <button
+              onClick={() => setStatusModalUser(user)}
+              className={`p-1.5 rounded-lg border transition-colors flex items-center space-x-1 text-xs font-semibold ${
+                isActive
+                  ? 'border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-950 dark:hover:bg-rose-950/50'
+                  : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-950 dark:hover:bg-emerald-950/50'
+              }`}
+              title={isActive ? 'Suspend user' : 'Activate user'}
+            >
+              {isActive ? (
+                <>
+                  <UserX className="w-3.5 h-3.5" />
+                  <span>Suspend</span>
+                </>
+              ) : (
+                <>
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>Activate</span>
+                </>
+              )}
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
