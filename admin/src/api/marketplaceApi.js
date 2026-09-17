@@ -19,6 +19,7 @@ export const marketplaceApi = {
       return response.data;
     } else {
       const response = await apiClient.post(`/admin/marketplace/products/${productId}/reject`, {
+        rejection_reason: rejection_reason,
         reason: rejection_reason,
       });
       return response.data;
