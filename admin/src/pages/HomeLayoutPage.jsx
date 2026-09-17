@@ -6,7 +6,7 @@ import { marketplaceApi } from '../api/marketplaceApi';
 import { prasadApi } from '../api/prasadApi';
 import { wellnessApi } from '../api/wellnessApi';
 import { useToast } from '../context/ToastContext';
-import { HOME_SECTION_TYPES, ACTION_TYPES } from '../utils/constants';
+import { HOME_SECTION_TYPES, ACTION_TYPES, FLUTTER_SCREEN_DESTINATIONS } from '../utils/constants';
 import { Modal } from '../components/common/Modal';
 import { ImagePreviewUpload } from '../components/common/ImagePreviewUpload';
 import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
@@ -617,13 +617,27 @@ export const HomeLayoutPage = () => {
                   Step 2: Select Child Entity / Screen Route
                 </label>
                 {navigationForm.action_type === 'SCREEN' && (
-                  <input
-                    type="text"
-                    value={navigationForm.action_target}
-                    onChange={(e) => setNavigationForm({ ...navigationForm, action_target: e.target.value })}
-                    placeholder="e.g. /tours/kashi-yatra"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-zinc-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-zinc-800 dark:text-zinc-200"
-                  />
+                  <div className="space-y-2">
+                    <select
+                      value={navigationForm.action_target}
+                      onChange={(e) => setNavigationForm({ ...navigationForm, action_target: e.target.value })}
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-zinc-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-zinc-800 dark:text-zinc-200 font-semibold"
+                    >
+                      <option value="">-- Select App Destination Target --</option>
+                      {FLUTTER_SCREEN_DESTINATIONS.map((dest) => (
+                        <option key={dest.value} value={dest.value}>
+                          {dest.label} ({dest.value})
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={navigationForm.action_target}
+                      onChange={(e) => setNavigationForm({ ...navigationForm, action_target: e.target.value })}
+                      placeholder="Or enter custom route (e.g. home, travel, shop, prasad, wellness)"
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-zinc-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-mono text-zinc-800 dark:text-zinc-200"
+                    />
+                  </div>
                 )}
                 {navigationForm.action_type === 'DESTINATION' && (
                   <select

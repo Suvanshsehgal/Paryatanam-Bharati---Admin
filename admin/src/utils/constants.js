@@ -30,3 +30,12 @@ export const ACTION_TYPES = [
   { label: 'External Govt URL', value: 'EXTERNAL_URL' },
 ];
 
+export const FLUTTER_SCREEN_DESTINATIONS = [
+  { label: 'Home Screen', value: 'home' },
+  { label: 'Travel Section', value: 'travel' },
+  { label: 'Shop (Marketplace)', value: 'shop' },
+  { label: 'Prasad Pre-booking', value: 'prasad' },
+  { label: 'Wellness & Healing', value: 'wellness' },
+];
+
+
