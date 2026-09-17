@@ -13,19 +13,20 @@ export const USER_ROLES = ['USER', 'ADMIN', 'OWNER'];
 
 export const HOME_SECTION_TYPES = [
   { label: 'Hero Carousel', value: 'HERO_CAROUSEL' },
-  { label: 'Promotions', value: 'PROMOTIONS' },
+  { label: 'Travel Categories', value: 'TRAVEL_CATEGORIES' },
   { label: 'Featured Destinations', value: 'FEATURED_DESTINATIONS' },
-  { label: 'Top Marketplace Items', value: 'TOP_MARKETPLACE' },
-  { label: 'Temple Highlights', value: 'TEMPLE_HIGHLIGHTS' },
-  { label: 'Wellness Courses', value: 'WELLNESS_COURSES' }
+  { label: 'Featured Tours', value: 'FEATURED_TOURS' },
+  { label: 'Cultural Experiences', value: 'CULTURAL_EXPERIENCES' },
+  { label: 'Wellness & Skill Academies', value: 'WELLNESS' },
+  { label: 'Promotions', value: 'PROMOTIONS' },
+  { label: 'Marketplace Highlights', value: 'MARKETPLACE_HIGHLIGHTS' },
 ];
 
 export const ACTION_TYPES = [
+  { label: 'Screen Navigation', value: 'SCREEN' },
+  { label: 'Shop Category', value: 'CATEGORY' },
   { label: 'Destination Route', value: 'DESTINATION' },
   { label: 'Tour Package Route', value: 'TOUR' },
-  { label: 'Shop Category', value: 'CATEGORY' },
-  { label: 'Marketplace Product', value: 'PRODUCT' },
-  { label: 'Temple Shrine', value: 'TEMPLE' },
-  { label: 'Wellness Service / Screen', value: 'WELLNESS' },
-  { label: 'External Govt URL', value: 'EXTERNAL_URL' }
+  { label: 'External Govt URL', value: 'EXTERNAL_URL' },
 ];
+

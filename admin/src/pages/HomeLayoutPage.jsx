@@ -33,11 +33,12 @@ import {
   Image as ImageIcon,
   Loader2,
   Sparkles,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Trash2,
 } from 'lucide-react';
 
 // Sortable Item Component for Section Drag & Drop
-const SortableSectionItem = ({ section, onAddSlide, onAddItem }) => {
+const SortableSectionItem = ({ section, onAddSlide, onAddItem, onDeleteSection, onDeleteSlide }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
   });
@@ -103,6 +104,16 @@ const SortableSectionItem = ({ section, onAddSlide, onAddItem }) => {
               <span>Add Card</span>
             </button>
           )}
+
+          {onDeleteSection && (
+            <button
+              onClick={() => onDeleteSection(section)}
+              className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-xl transition-colors"
+              title="Delete Section"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -116,7 +127,7 @@ const SortableSectionItem = ({ section, onAddSlide, onAddItem }) => {
             {section.carousel_items.map((slide) => (
               <div
                 key={slide.id}
-                className="rounded-xl border border-zinc-200/60 dark:border-slate-800 bg-zinc-50/50 dark:bg-slate-950 p-2.5 flex items-center space-x-3"
+                className="rounded-xl border border-zinc-200/60 dark:border-slate-800 bg-zinc-50/50 dark:bg-slate-950 p-2.5 flex items-center space-x-3 group relative"
               >
                 {slide.image_url ? (
                   <img
@@ -136,6 +147,15 @@ const SortableSectionItem = ({ section, onAddSlide, onAddItem }) => {
                     {slide.action_target}
                   </span>
                 </div>
+                {onDeleteSlide && (
+                  <button
+                    onClick={() => onDeleteSlide(section.id, slide.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-lg transition-all"
+                    title="Delete Slide"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -279,6 +299,24 @@ export const HomeLayoutPage = () => {
       setActiveAddItemSection(null);
     },
     onError: (err) => toast.error('Add Item Failed', err.detail || err.message),
+  });
+
+  const deleteSectionMutation = useMutation({
+    mutationFn: (sectionId) => homeApi.deleteSection(sectionId),
+    onSuccess: () => {
+      toast.success('Section Deleted', 'Home layout block deleted successfully.');
+      queryClient.invalidateQueries({ queryKey: ['homeSections'] });
+    },
+    onError: (err) => toast.error('Delete Section Failed', err.detail || err.message),
+  });
+
+  const deleteSlideMutation = useMutation({
+    mutationFn: ({ sectionId, itemId }) => homeApi.deleteCarouselSlide(sectionId, itemId),
+    onSuccess: () => {
+      toast.success('Slide Deleted', 'Carousel slide deleted successfully.');
+      queryClient.invalidateQueries({ queryKey: ['homeSections'] });
+    },
+    onError: (err) => toast.error('Delete Slide Failed', err.detail || err.message),
   });
 
   const handleDragEnd = (event) => {
@@ -448,6 +486,10 @@ export const HomeLayoutPage = () => {
                     });
                     setActiveAddItemSection(sec);
                   }}
+                  onDeleteSection={(sec) => deleteSectionMutation.mutate(sec.id)}
+                  onDeleteSlide={(sectionId, slideId) =>
+                    deleteSlideMutation.mutate({ sectionId, itemId: slideId })
+                  }
                 />
               ))}
             </div>
@@ -572,8 +614,17 @@ export const HomeLayoutPage = () => {
             {navigationForm.action_type !== 'EXTERNAL_URL' && (
               <div>
                 <label className="block text-xs font-bold text-orange-900 dark:text-orange-300 mb-1">
-                  Step 2: Select Child Entity (Auto-generates Route & target_entity_id)
+                  Step 2: Select Child Entity / Screen Route
                 </label>
+                {navigationForm.action_type === 'SCREEN' && (
+                  <input
+                    type="text"
+                    value={navigationForm.action_target}
+                    onChange={(e) => setNavigationForm({ ...navigationForm, action_target: e.target.value })}
+                    placeholder="e.g. /tours/kashi-yatra"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-zinc-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-zinc-800 dark:text-zinc-200"
+                  />
+                )}
                 {navigationForm.action_type === 'DESTINATION' && (
                   <select
                     value={navigationForm.target_entity_id || ''}
