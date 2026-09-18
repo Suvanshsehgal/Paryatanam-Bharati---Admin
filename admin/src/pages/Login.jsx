@@ -69,6 +69,12 @@ export const Login = () => {
         resData?.user ||
         response?.user;
 
+      const refreshToken =
+        resData?.session?.refresh_token ||
+        resData?.refresh_token ||
+        response?.refresh_token ||
+        null;
+
       if (!token) {
         throw new Error('Authentication failed: Bearer token was missing from backend response.');
       }
@@ -77,7 +83,7 @@ export const Login = () => {
         throw new Error('Authentication failed: User profile object was missing from backend response.');
       }
 
-      login(user, token);
+      login(user, token, refreshToken);
 
       const hasAdminPrivileges = checkIsAdmin(user);
 
