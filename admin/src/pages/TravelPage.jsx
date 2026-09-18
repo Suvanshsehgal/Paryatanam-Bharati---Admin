@@ -18,7 +18,8 @@ import {
   Loader2,
   Clock,
   Calendar,
-  Globe
+  Globe,
+  AlertTriangle
 } from 'lucide-react';
 
 export const TravelPage = () => {
@@ -26,6 +27,7 @@ export const TravelPage = () => {
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState('destinations'); // 'destinations' | 'tours'
+  const [tourStatusFilter, setTourStatusFilter] = useState('PENDING_APPROVAL');
 
   // Destination Modal state
   const [isDestModalOpen, setIsDestModalOpen] = useState(false);
@@ -43,6 +45,11 @@ export const TravelPage = () => {
     is_active: true,
   });
 
+  // Rejection Modal state
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [selectedTourForReject, setSelectedTourForReject] = useState(null);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState('');
+
   // Queries
   const { data: destinations, isLoading: loadingDestinations } = useQuery({
     queryKey: ['destinations'],
@@ -50,8 +57,8 @@ export const TravelPage = () => {
   });
 
   const { data: tours, isLoading: loadingTours } = useQuery({
-    queryKey: ['pendingTours'],
-    queryFn: () => travelApi.getPendingTours(),
+    queryKey: ['tours', tourStatusFilter],
+    queryFn: () => travelApi.getPendingTours(tourStatusFilter),
   });
 
   // Destination Mutations
@@ -75,15 +82,27 @@ export const TravelPage = () => {
     onError: (err) => toast.error('Update Error', err.detail || err.message),
   });
 
-  // Tour Moderation Mutation
-  const moderateTourMutation = useMutation({
-    mutationFn: ({ tourId, is_published, is_active }) =>
-      travelApi.moderateTour(tourId, { is_published, is_active }),
+  // Tour Approve Mutation
+  const approveTourMutation = useMutation({
+    mutationFn: (tourId) => travelApi.approveTour(tourId),
     onSuccess: (res) => {
-      toast.success('Tour Moderated', res.message);
-      queryClient.invalidateQueries({ queryKey: ['pendingTours'] });
+      toast.success('Tour Approved', res.message || 'Tour approved and published.');
+      queryClient.invalidateQueries({ queryKey: ['tours'] });
     },
-    onError: (err) => toast.error('Moderation Error', err.detail || err.message),
+    onError: (err) => toast.error('Approval Error', err.detail || err.message),
+  });
+
+  // Tour Reject Mutation
+  const rejectTourMutation = useMutation({
+    mutationFn: ({ tourId, reason }) => travelApi.rejectTour(tourId, reason),
+    onSuccess: (res) => {
+      toast.success('Tour Rejected', res.message || 'Tour status set to rejected.');
+      queryClient.invalidateQueries({ queryKey: ['tours'] });
+      setRejectModalOpen(false);
+      setSelectedTourForReject(null);
+      setRejectionReasonInput('');
+    },
+    onError: (err) => toast.error('Rejection Error', err.detail || err.message),
   });
 
   const handleOpenDestModal = (dest = null) => {
@@ -128,18 +147,37 @@ export const TravelPage = () => {
     }
   };
 
-  const handleToggleTourPublish = (tour) => {
-    const nextPublished = !tour.is_published;
-    moderateTourMutation.mutate({
-      tourId: tour.id,
-      is_published: nextPublished,
-      is_active: tour.is_active ?? true,
-    });
+  const handleOpenRejectModal = (tour) => {
+    setSelectedTourForReject(tour);
+    setRejectionReasonInput('');
+    setRejectModalOpen(true);
+  };
+
+  const handleConfirmReject = (e) => {
+    e.preventDefault();
+    if (!rejectionReasonInput.trim()) {
+      toast.error('Validation Error', 'Please enter a rejection reason.');
+      return;
+    }
+    if (selectedTourForReject) {
+      rejectTourMutation.mutate({
+        tourId: selectedTourForReject.id,
+        reason: rejectionReasonInput.trim(),
+      });
+    }
+  };
+
+  const getStatusBadgeVariant = (statusStr) => {
+    const s = (statusStr || '').toUpperCase();
+    if (s === 'APPROVED') return 'APPROVED';
+    if (s === 'REJECTED') return 'REJECTED';
+    if (s === 'UPDATE_PENDING_APPROVAL') return 'UPDATE_PENDING_APPROVAL';
+    return 'PENDING';
   };
 
   return (
     <div className="space-y-6">
-      {/* Header & Tabs */}
+      {/* Header & Main Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
@@ -169,7 +207,7 @@ export const TravelPage = () => {
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
             }`}
           >
-            Tour Package Approvals ({tours?.length || 0})
+            Tour Package Approvals
           </button>
         </div>
       </div>
@@ -248,66 +286,114 @@ export const TravelPage = () => {
       {/* TAB 2: Tour Approvals */}
       {activeTab === 'tours' && (
         <div className="space-y-4">
+          {/* Moderation Status Tabs */}
+          <div className="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
+            {[
+              { id: 'PENDING_APPROVAL', label: 'Pending Reviews' },
+              { id: 'APPROVED', label: 'Approved & Live' },
+              { id: 'UPDATE_PENDING_APPROVAL', label: 'Update Requests' },
+              { id: 'REJECTED', label: 'Rejected' },
+              { id: 'ALL', label: 'All Submissions' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setTourStatusFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                  tourStatusFilter === tab.id
+                    ? 'bg-orange-600 text-white shadow-sm'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           {loadingTours ? (
             <LoadingSkeleton count={3} className="h-36" />
           ) : !tours || tours.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-              <p className="text-xs text-slate-500">No pending operator tour packages awaiting moderation.</p>
+              <p className="text-xs text-slate-500">No tour packages found in this moderation queue.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {tours.map((tour) => (
-                <div
-                  key={tour.id}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between"
-                >
-                  <div className="flex items-start space-x-4">
-                    <img
-                      src={tour.cover_image}
-                      alt={tour.title}
-                      className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <StatusBadge status={tour.is_published ? 'APPROVED' : 'PENDING'} />
-                        <span className="text-xs font-mono font-bold text-orange-600 dark:text-orange-400">
-                          {formatCurrency(tour.price)}
-                        </span>
-                      </div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate mt-1">
-                        {tour.title}
-                      </h3>
-                      <p className="text-xs text-slate-500">Operator: {tour.operator_name}</p>
-                      <div className="flex items-center space-x-2 text-[11px] text-slate-400 mt-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>Duration: {tour.duration_days} Days</span>
+              {tours.map((tour) => {
+                const coverImg =
+                  tour.primary_image_url ||
+                  tour.cover_image ||
+                  (tour.media && tour.media[0] ? tour.media[0].file_path : null) ||
+                  'https://images.unsplash.com/photo-1561361513-2d000a50f0dc';
+
+                const priceVal = tour.base_price ?? tour.price ?? 0;
+                const operatorName = tour.operator?.name || tour.operator_name || 'Registered Operator';
+                const destName = typeof tour.destination === 'object' ? tour.destination.name : (tour.destination || 'Destination');
+                const catName = typeof tour.category === 'object' ? tour.category.name : (tour.category || 'Category');
+                const statusStr = tour.status || (tour.is_published ? 'APPROVED' : 'PENDING_APPROVAL');
+
+                return (
+                  <div
+                    key={tour.id}
+                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between"
+                  >
+                    <div className="flex items-start space-x-4">
+                      <img
+                        src={coverImg}
+                        alt={tour.title}
+                        className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <StatusBadge status={getStatusBadgeVariant(statusStr)} />
+                          <span className="text-xs font-mono font-bold text-orange-600 dark:text-orange-400">
+                            {formatCurrency(priceVal)}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate mt-1">
+                          {tour.title}
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          {destName} • {catName}
+                        </p>
+                        <p className="text-xs text-slate-400">Operator: {operatorName}</p>
+                        <div className="flex items-center space-x-2 text-[11px] text-slate-400 mt-1">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>Duration: {tour.duration_days} Days / {tour.duration_nights || (tour.duration_days > 1 ? tour.duration_days - 1 : 0)} Nights</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center justify-end border-t border-slate-100 dark:border-slate-800 pt-3">
-                    <button
-                      onClick={() => handleToggleTourPublish(tour)}
-                      disabled={moderateTourMutation.isPending}
-                      className={`px-4 py-1.5 text-xs font-bold rounded-xl text-white shadow-sm flex items-center space-x-1.5 ${
-                        tour.is_published ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'
-                      }`}
-                    >
-                      {tour.is_published ? (
-                        <>
-                          <XCircle className="w-4 h-4" />
-                          <span>Unpublish Circuit</span>
-                        </>
-                      ) : (
-                        <>
+                    {statusStr === 'REJECTED' && tour.rejection_reason && (
+                      <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-xs text-red-700 dark:text-red-300">
+                        <span className="font-bold">Rejection Reason:</span> {tour.rejection_reason}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-end space-x-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+                      {statusStr !== 'APPROVED' && (
+                        <button
+                          onClick={() => approveTourMutation.mutate(tour.id)}
+                          disabled={approveTourMutation.isPending}
+                          className="px-4 py-1.5 text-xs font-bold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm flex items-center space-x-1.5 transition-colors"
+                        >
                           <CheckCircle2 className="w-4 h-4" />
-                          <span>Approve & Publish Circuit</span>
-                        </>
+                          <span>Approve & Publish</span>
+                        </button>
                       )}
-                    </button>
+
+                      {statusStr !== 'REJECTED' && (
+                        <button
+                          onClick={() => handleOpenRejectModal(tour)}
+                          disabled={rejectTourMutation.isPending}
+                          className="px-4 py-1.5 text-xs font-bold rounded-xl text-white bg-rose-600 hover:bg-rose-700 shadow-sm flex items-center space-x-1.5 transition-colors"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          <span>Reject</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -411,6 +497,48 @@ export const TravelPage = () => {
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               )}
               <span>Save Destination</span>
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Rejection Reason Modal */}
+      <Modal
+        isOpen={rejectModalOpen}
+        onClose={() => setRejectModalOpen(false)}
+        title="Reject Tour Package Submission"
+        subtitle="Provide mandatory feedback to operator regarding why this package was rejected."
+      >
+        <form onSubmit={handleConfirmReject} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Rejection Reason & Actionable Feedback <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              rows={4}
+              required
+              value={rejectionReasonInput}
+              onChange={(e) => setRejectionReasonInput(e.target.value)}
+              placeholder="e.g. Please provide a detailed day-by-day itinerary and clear pricing breakdown before publishing."
+              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+            />
+          </div>
+
+          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setRejectModalOpen(false)}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={rejectTourMutation.isPending}
+              className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md flex items-center space-x-2"
+            >
+              {rejectTourMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              <span>Confirm Rejection</span>
             </button>
           </div>
         </form>

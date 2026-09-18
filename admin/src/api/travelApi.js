@@ -23,9 +23,12 @@ export const travelApi = {
     return response.data;
   },
 
-  getPendingTours: async () => {
+  getPendingTours: async (statusFilter = null) => {
     try {
-      const response = await apiClient.get('/admin/travel/tours');
+      const url = statusFilter && statusFilter !== 'ALL'
+        ? `/admin/travel/tours?status=${statusFilter}`
+        : '/admin/travel/tours';
+      const response = await apiClient.get(url);
       const data = response.data;
       if (Array.isArray(data)) return data;
       return data?.data || data?.items || [];
@@ -35,9 +38,21 @@ export const travelApi = {
     }
   },
 
+  approveTour: async (tourId) => {
+    const response = await apiClient.post(`/admin/travel/tours/${tourId}/approve`);
+    return response.data;
+  },
+
+  rejectTour: async (tourId, rejectionReason) => {
+    const response = await apiClient.post(`/admin/travel/tours/${tourId}/reject`, {
+      rejection_reason: rejectionReason,
+    });
+    return response.data;
+  },
+
   moderateTour: async (tourId, { is_published }) => {
     if (is_published) {
-      const response = await apiClient.post(`/admin/travel/tours/${tourId}/publish`);
+      const response = await apiClient.post(`/admin/travel/tours/${tourId}/approve`);
       return response.data;
     } else {
       const response = await apiClient.post(`/admin/travel/tours/${tourId}/unpublish`);
