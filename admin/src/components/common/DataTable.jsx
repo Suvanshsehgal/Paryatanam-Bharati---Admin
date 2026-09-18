@@ -14,7 +14,19 @@ export const DataTable = ({
   emptyTitle = 'No records found',
   emptyDescription = 'Try adjusting your filters or search query.',
 }) => {
-  const { page, limit, total_records, total_pages } = pagination;
+  // Ensure data is always a valid array
+  const tableData = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.data)
+    ? data.data
+    : Array.isArray(data?.items)
+    ? data.items
+    : [];
+
+  const page = Number(pagination?.page || 1);
+  const limit = Number(pagination?.limit || 10);
+  const total_records = Number(pagination?.total_records ?? pagination?.total ?? tableData.length);
+  const total_pages = Number((pagination?.total_pages ?? pagination?.pages ?? Math.ceil(total_records / limit)) || 1);
 
   const startRecord = total_records === 0 ? 0 : (page - 1) * limit + 1;
   const endRecord = Math.min(page * limit, total_records);
@@ -26,7 +38,7 @@ export const DataTable = ({
           <thead>
             <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {columns.map((col, idx) => (
-                <th key={col.key || idx} className={cn('px-6 py-3.5', col.className)}>
+                <th key={col.key || col.accessorKey || idx} className={cn('px-6 py-3.5', col.className)}>
                   {col.header}
                 </th>
               ))}
@@ -35,29 +47,32 @@ export const DataTable = ({
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
             {isLoading ? (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-8">
+                <td colSpan={columns.length || 1} className="px-6 py-8">
                   <LoadingSkeleton count={4} />
                 </td>
               </tr>
-            ) : data.length === 0 ? (
+            ) : tableData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-6 py-12">
+                <td colSpan={columns.length || 1} className="px-6 py-12">
                   <EmptyState title={emptyTitle} description={emptyDescription} />
                 </td>
               </tr>
             ) : (
-              data.map((row, rowIdx) => (
-                <tr
-                  key={row.id || rowIdx}
-                  className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
-                >
-                  {columns.map((col, colIdx) => (
-                    <td key={col.key || colIdx} className={cn('px-6 py-4 text-slate-700 dark:text-slate-300', col.className)}>
-                      {col.cell ? col.cell(row) : row[col.accessorKey]}
-                    </td>
-                  ))}
-                </tr>
-              ))
+              tableData.map((row, rowIdx) => {
+                if (!row) return null;
+                return (
+                  <tr
+                    key={row.id || row._id || rowIdx}
+                    className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                  >
+                    {columns.map((col, colIdx) => (
+                      <td key={col.key || col.accessorKey || colIdx} className={cn('px-6 py-4 text-slate-700 dark:text-slate-300', col.className)}>
+                        {col.cell ? col.cell(row) : (col.accessorKey ? row[col.accessorKey] : null)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

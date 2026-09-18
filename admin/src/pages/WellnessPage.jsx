@@ -9,6 +9,7 @@ import { Modal } from '../components/common/Modal';
 import { ConfirmationModal } from '../components/common/ConfirmationModal';
 import { ImagePreviewUpload } from '../components/common/ImagePreviewUpload';
 import { StatusBadge } from '../components/common/StatusBadge';
+import { ErrorState } from '../components/common/ErrorState';
 import {
   GraduationCap,
   Plus,
@@ -58,7 +59,7 @@ export const WellnessPage = () => {
     is_active: true,
   });
 
-  const { data: catRes, isLoading: loadingCats } = useQuery({
+  const { data: catRes, isLoading: loadingCats, isError: catError, refetch: refetchCats } = useQuery({
     queryKey: ['wellnessCategories', catPage, catLimit],
     queryFn: () => wellnessApi.getCategories({ page: catPage, limit: catLimit }),
   });
@@ -97,7 +98,7 @@ export const WellnessPage = () => {
     is_published: true,
   });
 
-  const { data: provRes, isLoading: loadingProvs } = useQuery({
+  const { data: provRes, isLoading: loadingProvs, isError: provError, refetch: refetchProvs } = useQuery({
     queryKey: ['wellnessProviders', provPage, provLimit, provCity, provState, provPublished, provActive, provFeatured],
     queryFn: () =>
       wellnessApi.getProviders({
@@ -148,7 +149,7 @@ export const WellnessPage = () => {
     is_published: true,
   });
 
-  const { data: servRes, isLoading: loadingServs } = useQuery({
+  const { data: servRes, isLoading: loadingServs, isError: servError, refetch: refetchServs } = useQuery({
     queryKey: ['wellnessServices', servPage, servLimit, servCategoryId, servProviderId, servPublished, servActive, servFeatured],
     queryFn: () =>
       wellnessApi.getServices({
@@ -179,6 +180,10 @@ export const WellnessPage = () => {
     queryFn: () => wellnessApi.getProviders({ page: 1, limit: 100 }),
   });
 
+  // Safe category & provider options for selects
+  const categoryOptions = Array.isArray(allCategories?.data) ? allCategories.data : Array.isArray(allCategories) ? allCategories : [];
+  const providerOptions = Array.isArray(allProviders?.data) ? allProviders.data : Array.isArray(allProviders) ? allProviders : [];
+
   // ---------------------------------------------------------------------------
   // 4. Bookings State & Queries
   // ---------------------------------------------------------------------------
@@ -191,7 +196,7 @@ export const WellnessPage = () => {
   const [statusBookItem, setStatusBookItem] = useState(null);
   const [targetStatus, setTargetStatus] = useState('CONFIRMED');
 
-  const { data: bookRes, isLoading: loadingBooks } = useQuery({
+  const { data: bookRes, isLoading: loadingBooks, isError: bookError, refetch: refetchBooks } = useQuery({
     queryKey: ['wellnessBookings', bookPage, bookLimit, bookStatus, bookDate],
     queryFn: () =>
       wellnessApi.getAdminBookings({
@@ -365,15 +370,15 @@ export const WellnessPage = () => {
       cell: (row) => (
         <div className="flex items-center space-x-3">
           <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-950/50 flex items-center justify-center text-orange-600 dark:text-orange-400 font-bold flex-shrink-0">
-            {row.icon_url ? (
+            {row?.icon_url ? (
               <img src={row.icon_url} alt="" className="w-5 h-5 object-contain" />
             ) : (
               <Tag className="w-4 h-4" />
             )}
           </div>
           <div>
-            <div className="font-bold text-slate-900 dark:text-slate-100">{row.name}</div>
-            <div className="text-[11px] font-mono text-slate-400">{row.slug}</div>
+            <div className="font-bold text-slate-900 dark:text-slate-100">{row?.name || 'Untitled Category'}</div>
+            <div className="text-[11px] font-mono text-slate-400">{row?.slug || ''}</div>
           </div>
         </div>
       ),
@@ -382,18 +387,18 @@ export const WellnessPage = () => {
       header: 'Description',
       accessorKey: 'description',
       cell: (row) => (
-        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs line-clamp-2">{row.description || 'No description'}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs line-clamp-2">{row?.description || 'No description'}</p>
       ),
     },
     {
       header: 'Order',
       accessorKey: 'display_order',
-      cell: (row) => <span className="font-mono text-xs text-slate-600 dark:text-slate-400">#{row.display_order ?? 0}</span>,
+      cell: (row) => <span className="font-mono text-xs text-slate-600 dark:text-slate-400">#{row?.display_order ?? 0}</span>,
     },
     {
       header: 'Status',
       accessorKey: 'is_active',
-      cell: (row) => <StatusBadge status={row.is_active ? 'ACTIVE' : 'INACTIVE'} />,
+      cell: (row) => <StatusBadge status={row?.is_active ? 'ACTIVE' : 'INACTIVE'} />,
     },
     {
       header: 'Actions',
@@ -403,12 +408,12 @@ export const WellnessPage = () => {
             onClick={() => {
               setEditingCat(row);
               setCatForm({
-                name: row.name || '',
-                slug: row.slug || '',
-                description: row.description || '',
-                icon_url: row.icon_url || '',
-                display_order: row.display_order ?? 0,
-                is_active: row.is_active ?? true,
+                name: row?.name || '',
+                slug: row?.slug || '',
+                description: row?.description || '',
+                icon_url: row?.icon_url || '',
+                display_order: row?.display_order ?? 0,
+                is_active: row?.is_active ?? true,
               });
               setIsEditCatOpen(true);
             }}
@@ -436,7 +441,7 @@ export const WellnessPage = () => {
       accessorKey: 'name',
       cell: (row) => (
         <div className="flex items-center space-x-3">
-          {row.cover_image_url ? (
+          {row?.cover_image_url ? (
             <img src={row.cover_image_url} alt="" className="w-10 h-10 rounded-xl object-cover border border-slate-100 dark:border-slate-800 flex-shrink-0" />
           ) : (
             <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0">
@@ -444,10 +449,10 @@ export const WellnessPage = () => {
             </div>
           )}
           <div>
-            <div className="font-bold text-slate-900 dark:text-slate-100">{row.name}</div>
+            <div className="font-bold text-slate-900 dark:text-slate-100">{row?.name || 'Wellness Provider'}</div>
             <div className="text-[11px] text-slate-400 flex items-center space-x-1">
               <MapPin className="w-3 h-3 text-orange-500" />
-              <span>{row.city}, {row.state}</span>
+              <span>{row?.city || 'N/A'}, {row?.state || ''}</span>
             </div>
           </div>
         </div>
@@ -459,7 +464,7 @@ export const WellnessPage = () => {
       cell: (row) => (
         <div className="text-xs text-slate-600 dark:text-slate-400 flex items-center space-x-1">
           <Phone className="w-3.5 h-3.5 text-slate-400" />
-          <span>{row.phone || 'N/A'}</span>
+          <span>{row?.phone || 'N/A'}</span>
         </div>
       ),
     },
@@ -469,15 +474,15 @@ export const WellnessPage = () => {
         <div className="space-y-1">
           <div className="flex items-center space-x-1 text-amber-500 text-xs font-bold">
             <Star className="w-3.5 h-3.5 fill-amber-400" />
-            <span>{row.rating ?? row.average_rating ?? '4.5'}</span>
+            <span>{row?.rating ?? row?.average_rating ?? '4.5'}</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            {row.is_featured && (
+            {row?.is_featured && (
               <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
                 FEATURED
               </span>
             )}
-            {!row.is_active && (
+            {!row?.is_active && (
               <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">
                 DISABLED
               </span>
@@ -489,7 +494,7 @@ export const WellnessPage = () => {
     {
       header: 'Publish Status',
       accessorKey: 'is_published',
-      cell: (row) => <StatusBadge status={row.is_published ? 'APPROVED' : 'DRAFT'} />,
+      cell: (row) => <StatusBadge status={row?.is_published ? 'APPROVED' : 'DRAFT'} />,
     },
     {
       header: 'Actions',
@@ -506,20 +511,20 @@ export const WellnessPage = () => {
             onClick={() => {
               setEditingProv(row);
               setProvForm({
-                name: row.name || '',
-                city: row.city || '',
-                state: row.state || 'Uttarakhand',
-                country: row.country || 'India',
-                address: row.address || '',
-                pincode: row.pincode || '',
-                phone: row.phone || '',
-                cover_image_url: row.cover_image_url || '',
-                short_description: row.short_description || '',
-                description: row.description || '',
-                rating: row.rating ?? row.average_rating ?? 4.5,
-                is_featured: row.is_featured ?? false,
-                is_active: row.is_active ?? true,
-                is_published: row.is_published ?? true,
+                name: row?.name || '',
+                city: row?.city || '',
+                state: row?.state || 'Uttarakhand',
+                country: row?.country || 'India',
+                address: row?.address || '',
+                pincode: row?.pincode || '',
+                phone: row?.phone || '',
+                cover_image_url: row?.cover_image_url || '',
+                short_description: row?.short_description || '',
+                description: row?.description || '',
+                rating: row?.rating ?? row?.average_rating ?? 4.5,
+                is_featured: row?.is_featured ?? false,
+                is_active: row?.is_active ?? true,
+                is_published: row?.is_published ?? true,
               });
               setIsEditProvOpen(true);
             }}
@@ -528,7 +533,7 @@ export const WellnessPage = () => {
           >
             <Edit className="w-4 h-4" />
           </button>
-          {row.is_published ? (
+          {row?.is_published ? (
             <button
               onClick={() => unpublishProviderMutation.mutate(row.id)}
               className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -564,10 +569,10 @@ export const WellnessPage = () => {
       accessorKey: 'name',
       cell: (row) => (
         <div>
-          <div className="font-bold text-slate-900 dark:text-slate-100">{row.name}</div>
+          <div className="font-bold text-slate-900 dark:text-slate-100">{row?.name || 'Treatment Service'}</div>
           <div className="text-[11px] text-slate-400 flex items-center space-x-1 mt-0.5">
             <Building2 className="w-3 h-3 text-slate-400" />
-            <span>{row.provider_name || 'Wellness Center'}</span>
+            <span>{row?.provider_name || 'Wellness Center'}</span>
           </div>
         </div>
       ),
@@ -577,7 +582,7 @@ export const WellnessPage = () => {
       accessorKey: 'category_name',
       cell: (row) => (
         <span className="px-2 py-0.5 text-xs font-semibold rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-          {row.category_name || 'General Wellness'}
+          {row?.category_name || 'General Wellness'}
         </span>
       ),
     },
@@ -586,11 +591,11 @@ export const WellnessPage = () => {
       cell: (row) => (
         <div>
           <div className="font-extrabold text-xs text-orange-600 dark:text-orange-400">
-            {formatCurrency(row.price)}
+            {formatCurrency(row?.price)}
           </div>
           <div className="text-[11px] text-slate-400 flex items-center space-x-1 mt-0.5">
             <Clock className="w-3 h-3" />
-            <span>{row.duration_minutes || 60} Mins</span>
+            <span>{row?.duration_minutes || 60} Mins</span>
           </div>
         </div>
       ),
@@ -599,17 +604,17 @@ export const WellnessPage = () => {
       header: 'Curation',
       cell: (row) => (
         <div className="flex items-center space-x-1">
-          {row.is_featured && (
+          {row?.is_featured && (
             <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
               FEATURED
             </span>
           )}
-          {!row.is_active && (
+          {!row?.is_active && (
             <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">
               DISABLED
             </span>
           )}
-          {row.is_active && !row.is_featured && (
+          {row?.is_active && !row?.is_featured && (
             <span className="text-xs text-slate-400">—</span>
           )}
         </div>
@@ -618,7 +623,7 @@ export const WellnessPage = () => {
     {
       header: 'Status',
       accessorKey: 'is_published',
-      cell: (row) => <StatusBadge status={row.is_published ? 'APPROVED' : 'DRAFT'} />,
+      cell: (row) => <StatusBadge status={row?.is_published ? 'APPROVED' : 'DRAFT'} />,
     },
     {
       header: 'Actions',
@@ -635,17 +640,17 @@ export const WellnessPage = () => {
             onClick={() => {
               setEditingServ(row);
               setServForm({
-                provider_id: row.provider_id || '',
-                category_id: row.category_id || '',
-                name: row.name || '',
-                slug: row.slug || '',
-                short_description: row.short_description || '',
-                description: row.description || '',
-                price: row.price ?? '',
-                duration_minutes: row.duration_minutes ?? '',
-                is_featured: row.is_featured ?? false,
-                is_active: row.is_active ?? true,
-                is_published: row.is_published ?? true,
+                provider_id: row?.provider_id || '',
+                category_id: row?.category_id || '',
+                name: row?.name || '',
+                slug: row?.slug || '',
+                short_description: row?.short_description || '',
+                description: row?.description || '',
+                price: row?.price ?? '',
+                duration_minutes: row?.duration_minutes ?? '',
+                is_featured: row?.is_featured ?? false,
+                is_active: row?.is_active ?? true,
+                is_published: row?.is_published ?? true,
               });
               setIsEditServOpen(true);
             }}
@@ -654,7 +659,7 @@ export const WellnessPage = () => {
           >
             <Edit className="w-4 h-4" />
           </button>
-          {row.is_published ? (
+          {row?.is_published ? (
             <button
               onClick={() => unpublishServiceMutation.mutate(row.id)}
               className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -691,10 +696,10 @@ export const WellnessPage = () => {
       cell: (row) => (
         <div>
           <div className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100">
-            {row.booking_reference || row.id?.slice(0, 8)}
+            {row?.booking_reference || (row?.id ? row.id.slice(0, 8) : 'N/A')}
           </div>
           <div className="text-[10px] text-slate-400">
-            {row.created_at ? new Date(row.created_at).toLocaleDateString() : ''}
+            {row?.created_at ? new Date(row.created_at).toLocaleDateString() : ''}
           </div>
         </div>
       ),
@@ -708,8 +713,8 @@ export const WellnessPage = () => {
             <User className="w-3.5 h-3.5" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{row.user_name || row.user_email || 'Customer'}</div>
-            <div className="text-[10px] text-slate-400">{row.user_phone || row.user_email || ''}</div>
+            <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{row?.user_name || row?.user_email || 'Customer'}</div>
+            <div className="text-[10px] text-slate-400">{row?.user_phone || row?.user_email || ''}</div>
           </div>
         </div>
       ),
@@ -718,8 +723,8 @@ export const WellnessPage = () => {
       header: 'Center & Service',
       cell: (row) => (
         <div>
-          <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{row.service_name || 'Treatment Service'}</div>
-          <div className="text-[11px] text-slate-400">{row.provider_name || 'Wellness Center'}</div>
+          <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{row?.service_name || 'Treatment Service'}</div>
+          <div className="text-[11px] text-slate-400">{row?.provider_name || 'Wellness Center'}</div>
         </div>
       ),
     },
@@ -730,16 +735,16 @@ export const WellnessPage = () => {
         <div className="text-xs text-slate-700 dark:text-slate-300">
           <div className="font-semibold flex items-center space-x-1">
             <Calendar className="w-3 h-3 text-orange-500" />
-            <span>{row.booking_date}</span>
+            <span>{row?.booking_date || 'N/A'}</span>
           </div>
-          <div className="text-[10px] text-slate-400">{row.slot_time || row.start_time || 'Scheduled Slot'}</div>
+          <div className="text-[10px] text-slate-400">{row?.slot_time || row?.start_time || 'Scheduled Slot'}</div>
         </div>
       ),
     },
     {
       header: 'Status',
       accessorKey: 'status',
-      cell: (row) => <StatusBadge status={row.status} />,
+      cell: (row) => <StatusBadge status={row?.status} />,
     },
     {
       header: 'Actions',
@@ -755,7 +760,7 @@ export const WellnessPage = () => {
           <button
             onClick={() => {
               setStatusBookItem(row);
-              setTargetStatus(row.status === 'CONFIRMED' ? 'COMPLETED' : 'CONFIRMED');
+              setTargetStatus(row?.status === 'CONFIRMED' ? 'COMPLETED' : 'CONFIRMED');
             }}
             className="px-2.5 py-1 text-xs font-bold rounded-lg text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/50 hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors"
           >
@@ -852,16 +857,24 @@ export const WellnessPage = () => {
             </button>
           </div>
 
-          <DataTable
-            columns={categoryColumns}
-            data={catRes?.data || []}
-            pagination={catRes?.pagination || { page: 1, limit: 10, total_records: 0, total_pages: 1 }}
-            onPageChange={setCatPage}
-            onLimitChange={setCatLimit}
-            isLoading={loadingCats}
-            emptyTitle="No wellness categories found"
-            emptyDescription="Create standard categories like Yoga, Ayurveda, Naturopathy, or Meditation."
-          />
+          {catError ? (
+            <ErrorState
+              title="Failed to load wellness categories"
+              description="Unable to connect to the backend categories endpoint."
+              onRetry={refetchCats}
+            />
+          ) : (
+            <DataTable
+              columns={categoryColumns}
+              data={catRes?.data || []}
+              pagination={catRes?.pagination || { page: catPage, limit: catLimit, total_records: 0, total_pages: 1 }}
+              onPageChange={setCatPage}
+              onLimitChange={setCatLimit}
+              isLoading={loadingCats}
+              emptyTitle="No wellness categories found"
+              emptyDescription="Create standard categories like Yoga, Ayurveda, Naturopathy, or Meditation."
+            />
+          )}
         </div>
       )}
 
@@ -948,16 +961,24 @@ export const WellnessPage = () => {
             </button>
           </div>
 
-          <DataTable
-            columns={providerColumns}
-            data={provRes?.data || []}
-            pagination={provRes?.pagination || { page: 1, limit: 10, total_records: 0, total_pages: 1 }}
-            onPageChange={setProvPage}
-            onLimitChange={setProvLimit}
-            isLoading={loadingProvs}
-            emptyTitle="No wellness centers registered"
-            emptyDescription="No institutes match the selected city/state or publish filter."
-          />
+          {provError ? (
+            <ErrorState
+              title="Failed to load wellness centers"
+              description="Unable to connect to the backend provider endpoint."
+              onRetry={refetchProvs}
+            />
+          ) : (
+            <DataTable
+              columns={providerColumns}
+              data={provRes?.data || []}
+              pagination={provRes?.pagination || { page: provPage, limit: provLimit, total_records: 0, total_pages: 1 }}
+              onPageChange={setProvPage}
+              onLimitChange={setProvLimit}
+              isLoading={loadingProvs}
+              emptyTitle="No wellness centers registered"
+              emptyDescription="No institutes match the selected city/state or publish filter."
+            />
+          )}
         </div>
       )}
 
@@ -975,7 +996,7 @@ export const WellnessPage = () => {
                 className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
               >
                 <option value="">All Categories</option>
-                {allCategories?.data?.map((c) => (
+                {categoryOptions.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
@@ -990,7 +1011,7 @@ export const WellnessPage = () => {
                 className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 truncate"
               >
                 <option value="">All Centers</option>
-                {allProviders?.data?.map((p) => (
+                {providerOptions.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name} ({p.city})
                   </option>
@@ -1013,8 +1034,8 @@ export const WellnessPage = () => {
             <button
               onClick={() => {
                 setServForm({
-                  provider_id: allProviders?.data?.[0]?.id || '',
-                  category_id: allCategories?.data?.[0]?.id || '',
+                  provider_id: providerOptions[0]?.id || '',
+                  category_id: categoryOptions[0]?.id || '',
                   name: '',
                   slug: '',
                   short_description: '',
@@ -1034,16 +1055,24 @@ export const WellnessPage = () => {
             </button>
           </div>
 
-          <DataTable
-            columns={serviceColumns}
-            data={servRes?.data || []}
-            pagination={servRes?.pagination || { page: 1, limit: 10, total_records: 0, total_pages: 1 }}
-            onPageChange={setServPage}
-            onLimitChange={setServLimit}
-            isLoading={loadingServs}
-            emptyTitle="No wellness services found"
-            emptyDescription="No services listed under the selected category or provider filter."
-          />
+          {servError ? (
+            <ErrorState
+              title="Failed to load wellness services"
+              description="Unable to connect to the backend services endpoint."
+              onRetry={refetchServs}
+            />
+          ) : (
+            <DataTable
+              columns={serviceColumns}
+              data={servRes?.data || []}
+              pagination={servRes?.pagination || { page: servPage, limit: servLimit, total_records: 0, total_pages: 1 }}
+              onPageChange={setServPage}
+              onLimitChange={setServLimit}
+              isLoading={loadingServs}
+              emptyTitle="No wellness services found"
+              emptyDescription="No services listed under the selected category or provider filter."
+            />
+          )}
         </div>
       )}
 
@@ -1086,16 +1115,24 @@ export const WellnessPage = () => {
             )}
           </div>
 
-          <DataTable
-            columns={bookingColumns}
-            data={bookRes?.data || []}
-            pagination={bookRes?.pagination || { page: 1, limit: 10, total_records: 0, total_pages: 1 }}
-            onPageChange={setBookPage}
-            onLimitChange={setBookLimit}
-            isLoading={loadingBooks}
-            emptyTitle="No platform bookings found"
-            emptyDescription="Appointment bookings across clinics will appear here."
-          />
+          {bookError ? (
+            <ErrorState
+              title="Failed to load platform bookings"
+              description="Unable to connect to the backend bookings endpoint."
+              onRetry={refetchBooks}
+            />
+          ) : (
+            <DataTable
+              columns={bookingColumns}
+              data={bookRes?.data || []}
+              pagination={bookRes?.pagination || { page: bookPage, limit: bookLimit, total_records: 0, total_pages: 1 }}
+              onPageChange={setBookPage}
+              onLimitChange={setBookLimit}
+              isLoading={loadingBooks}
+              emptyTitle="No platform bookings found"
+              emptyDescription="Appointment bookings across clinics will appear here."
+            />
+          )}
         </div>
       )}
 
@@ -1562,24 +1599,30 @@ export const WellnessPage = () => {
               <div>
                 <span className="font-bold text-slate-900 dark:text-slate-100 block mb-1">Curated Services ({provDetail.services?.length || 0})</span>
                 <ul className="space-y-1">
-                  {provDetail.services?.map((s) => (
+                  {(provDetail.services || []).map((s) => (
                     <li key={s.id} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-950 flex justify-between">
                       <span>{s.name}</span>
                       <span className="font-bold text-orange-600">{formatCurrency(s.price)}</span>
                     </li>
-                  )) || <li className="text-slate-400">No services created yet</li>}
+                  ))}
+                  {(!provDetail.services || provDetail.services.length === 0) && (
+                    <li className="text-slate-400">No services created yet</li>
+                  )}
                 </ul>
               </div>
 
               <div>
                 <span className="font-bold text-slate-900 dark:text-slate-100 block mb-1">Practitioners ({provDetail.practitioners?.length || 0})</span>
                 <ul className="space-y-1">
-                  {provDetail.practitioners?.map((p) => (
+                  {(provDetail.practitioners || []).map((p) => (
                     <li key={p.id} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-950 flex justify-between">
                       <span>{p.full_name || p.name}</span>
                       <span className="text-slate-400">{p.specialization || 'Healer'}</span>
                     </li>
-                  )) || <li className="text-slate-400">No practitioners linked</li>}
+                  ))}
+                  {(!provDetail.practitioners || provDetail.practitioners.length === 0) && (
+                    <li className="text-slate-400">No practitioners linked</li>
+                  )}
                 </ul>
               </div>
             </div>
@@ -1615,7 +1658,7 @@ export const WellnessPage = () => {
               onChange={(e) => setServForm({ ...servForm, provider_id: e.target.value })}
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
             >
-              {allProviders?.data?.map((p) => (
+              {providerOptions.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name} ({p.city})
                 </option>
@@ -1631,7 +1674,7 @@ export const WellnessPage = () => {
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
             >
               <option value="">Select Category...</option>
-              {allCategories?.data?.map((c) => (
+              {categoryOptions.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
@@ -1902,7 +1945,7 @@ export const WellnessPage = () => {
         isOpen={!!statusBookItem}
         onClose={() => setStatusBookItem(null)}
         title="Update Appointment Status"
-        subtitle={`Change status for booking #${statusBookItem?.booking_reference || statusBookItem?.id?.slice(0, 8)}`}
+        subtitle={`Change status for booking #${statusBookItem?.booking_reference || (statusBookItem?.id ? statusBookItem.id.slice(0, 8) : '')}`}
       >
         <div className="space-y-4 text-xs">
           <p className="text-slate-600 dark:text-slate-300">
