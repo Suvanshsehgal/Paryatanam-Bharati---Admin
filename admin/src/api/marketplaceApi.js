@@ -1,9 +1,13 @@
 import { apiClient } from './client';
 
 export const marketplaceApi = {
-  getPendingProducts: async () => {
+  getPendingProducts: async (statusFilter = 'PENDING_QUEUE') => {
     try {
-      const response = await apiClient.get('/admin/marketplace/products');
+      const params = {};
+      if (statusFilter && statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+      const response = await apiClient.get('/admin/marketplace/products', { params });
       const data = response.data;
       if (Array.isArray(data)) return data;
       return data?.data || data?.items || [];

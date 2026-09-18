@@ -27,6 +27,7 @@ export const MarketplacePage = () => {
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState('moderation'); // 'moderation' | 'categories'
+  const [moderationFilter, setModerationFilter] = useState('PENDING_QUEUE'); // 'PENDING_QUEUE' | 'APPROVED' | 'REJECTED' | 'all'
 
   // Moderation state
   const [moderateProduct, setModerateProduct] = useState(null); // product object
@@ -48,8 +49,8 @@ export const MarketplacePage = () => {
 
   // Queries
   const { data: pendingProducts, isLoading: loadingPending } = useQuery({
-    queryKey: ['pendingProducts'],
-    queryFn: () => marketplaceApi.getPendingProducts(),
+    queryKey: ['pendingProducts', moderationFilter],
+    queryFn: () => marketplaceApi.getPendingProducts(moderationFilter),
   });
 
   const { data: categories, isLoading: loadingCategories } = useQuery({
@@ -67,7 +68,15 @@ export const MarketplacePage = () => {
       setModerateProduct(null);
       setRejectionReason('');
     },
-    onError: (err) => toast.error('Moderation Error', err.detail || err.message),
+    onError: (err) => {
+      if (err.status === 409 || (err.message && err.message.toLowerCase().includes('already'))) {
+        toast.info('Status Synchronized', 'This product is already approved.');
+        queryClient.invalidateQueries({ queryKey: ['pendingProducts'] });
+        setModerateProduct(null);
+      } else {
+        toast.error('Moderation Error', err.detail || err.message);
+      }
+    },
   });
 
   // Certification Mutation
@@ -269,18 +278,63 @@ export const MarketplacePage = () => {
       {/* TAB 1: Vendor Moderation Queue */}
       {activeTab === 'moderation' && (
         <div className="space-y-4">
+          {/* Moderation Queue Sub-Filter Bar */}
+          <div className="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
+            <button
+              onClick={() => setModerationFilter('PENDING_QUEUE')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
+                moderationFilter === 'PENDING_QUEUE'
+                  ? 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              Pending Reviews
+            </button>
+            <button
+              onClick={() => setModerationFilter('APPROVED')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
+                moderationFilter === 'APPROVED'
+                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              Approved & Live
+            </button>
+            <button
+              onClick={() => setModerationFilter('REJECTED')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
+                moderationFilter === 'REJECTED'
+                  ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              Rejected
+            </button>
+            <button
+              onClick={() => setModerationFilter('all')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
+                moderationFilter === 'all'
+                  ? 'bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-200'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              All Submissions
+            </button>
+          </div>
+
           {loadingPending ? (
             <LoadingSkeleton count={3} className="h-40" />
           ) : !pendingProducts || pendingProducts.length === 0 ? (
             <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
               <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-2 opacity-80" />
               <h3 className="text-base font-bold">Queue Empty</h3>
-              <p className="text-xs text-slate-500 mt-1">All vendor marketplace products have been reviewed!</p>
+              <p className="text-xs text-slate-500 mt-1">No products found for the selected moderation status filter.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {pendingProducts.map((product) => {
                 const isCertified = product.certification_status === 'CERTIFIED';
+                const isActionable = ['PENDING_APPROVAL', 'PENDING_REVIEW', 'UPDATE_PENDING_APPROVAL'].includes(product.status);
 
                 return (
                   <div
@@ -289,7 +343,7 @@ export const MarketplacePage = () => {
                   >
                     <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                       <img
-                        src={product.primary_image}
+                        src={product.primary_image || product.image_url}
                         alt={product.name}
                         className="w-full sm:w-24 h-40 sm:h-24 rounded-xl object-cover border border-slate-100 dark:border-slate-800 flex-shrink-0"
                       />
@@ -331,20 +385,29 @@ export const MarketplacePage = () => {
 
                     {/* Moderation Controls */}
                     <div className="flex items-center justify-end space-x-3 border-t border-slate-100 dark:border-slate-800 pt-3">
-                      <button
-                        onClick={() => handleOpenModerate(product, 'REJECTED')}
-                        className="px-3.5 py-1.5 text-xs font-bold rounded-xl text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 hover:bg-rose-50 dark:hover:bg-rose-950 transition-colors flex items-center space-x-1.5"
-                      >
-                        <XCircle className="w-4 h-4" />
-                        <span>Reject Item</span>
-                      </button>
-                      <button
-                        onClick={() => handleOpenModerate(product, 'APPROVED')}
-                        className="px-4 py-1.5 text-xs font-bold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm flex items-center space-x-1.5"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Approve Product</span>
-                      </button>
+                      {isActionable ? (
+                        <>
+                          <button
+                            onClick={() => handleOpenModerate(product, 'REJECTED')}
+                            className="px-3.5 py-1.5 text-xs font-bold rounded-xl text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 hover:bg-rose-50 dark:hover:bg-rose-950 transition-colors flex items-center space-x-1.5"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            <span>Reject Item</span>
+                          </button>
+                          <button
+                            onClick={() => handleOpenModerate(product, 'APPROVED')}
+                            className="px-4 py-1.5 text-xs font-bold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm flex items-center space-x-1.5"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Approve Product</span>
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Approved & Synchronized</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
