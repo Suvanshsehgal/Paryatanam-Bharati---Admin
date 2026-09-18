@@ -8,11 +8,17 @@ export const marketplaceApi = {
         params.status = statusFilter;
       }
       const response = await apiClient.get('/admin/marketplace/products', { params });
-      const data = response.data;
-      if (Array.isArray(data)) return data;
-      return data?.data || data?.items || [];
+      
+      const resData = response.data;
+      if (Array.isArray(resData)) return resData;
+      if (resData?.data && Array.isArray(resData.data)) return resData.data;
+      if (resData?.data?.data && Array.isArray(resData.data.data)) return resData.data.data;
+      if (resData?.items && Array.isArray(resData.items)) return resData.items;
+      if (resData?.data?.items && Array.isArray(resData.data.items)) return resData.data.items;
+      
+      return [];
     } catch (err) {
-      if (err.status === 404) return [];
+      if (err?.status === 404 || err?.response?.status === 404) return [];
       throw err;
     }
   },
@@ -40,11 +46,17 @@ export const marketplaceApi = {
   getCategories: async () => {
     try {
       const response = await apiClient.get('/admin/marketplace/categories');
-      const data = response.data;
-      if (Array.isArray(data)) return data;
-      return data?.data || data?.items || [];
+      
+      const resData = response.data;
+      if (Array.isArray(resData)) return resData;
+      if (resData?.data && Array.isArray(resData.data)) return resData.data;
+      if (resData?.data?.data && Array.isArray(resData.data.data)) return resData.data.data;
+      if (resData?.items && Array.isArray(resData.items)) return resData.items;
+      if (resData?.data?.items && Array.isArray(resData.data.items)) return resData.data.items;
+      
+      return [];
     } catch (err) {
-      if (err.status === 404) return [];
+      if (err?.status === 404 || err?.response?.status === 404) return [];
       throw err;
     }
   },

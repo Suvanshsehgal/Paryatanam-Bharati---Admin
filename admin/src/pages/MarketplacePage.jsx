@@ -332,25 +332,25 @@ export const MarketplacePage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {pendingProducts.map((product) => {
-                const isCertified = product.certification_status === 'CERTIFIED';
-                const isActionable = ['PENDING_APPROVAL', 'PENDING_REVIEW', 'UPDATE_PENDING_APPROVAL'].includes(product.status);
+              {(pendingProducts || []).filter(Boolean).map((product, idx) => {
+                const isCertified = product?.certification_status === 'CERTIFIED';
+                const isActionable = ['PENDING_APPROVAL', 'PENDING_REVIEW', 'UPDATE_PENDING_APPROVAL'].includes(product?.status);
 
                 return (
                   <div
-                    key={product.id}
+                    key={product?.id || idx}
                     className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4 flex flex-col justify-between"
                   >
                     <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                       <img
-                        src={product.primary_image || product.image_url}
-                        alt={product.name}
+                        src={product?.primary_image || product?.image_url || 'https://via.placeholder.com/150'}
+                        alt={product?.name || 'Unknown Product'}
                         className="w-full sm:w-24 h-40 sm:h-24 rounded-xl object-cover border border-slate-100 dark:border-slate-800 flex-shrink-0"
                       />
 
                       <div className="flex-1 min-w-0 space-y-1 w-full">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <StatusBadge status={product.status} />
+                          <StatusBadge status={product?.status || 'UNKNOWN'} />
                           <button
                             onClick={() => handleToggleCertify(product)}
                             className={`px-2.5 py-1 text-[10px] font-bold rounded-full border transition-all flex items-center space-x-1 ${
@@ -365,20 +365,19 @@ export const MarketplacePage = () => {
                           </button>
                         </div>
 
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate mt-1">
-                          {product.name}
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                          {product?.name || 'Unnamed Product'}
                         </h3>
-
-                        <p className="text-xs text-slate-500 font-mono">Vendor ID: {product.vendor_id}</p>
-
-                        <div className="flex flex-wrap items-center space-x-3 text-xs pt-1">
-                          <span className="font-extrabold text-slate-900 dark:text-white">
-                            {formatCurrency(product.price)}
+                        <p className="text-xs text-slate-500 font-medium">Vendor: {product?.vendor?.name || 'Unknown Vendor'}</p>
+                        
+                        <div className="flex items-center space-x-3 text-xs text-slate-600 dark:text-slate-400">
+                          <span className="font-bold text-slate-900 dark:text-white">
+                            {formatCurrency(product?.price || 0)}
                           </span>
-                          {product.compare_at_price && (
-                            <span className="line-through text-slate-400">{formatCurrency(product.compare_at_price)}</span>
-                          )}
-                          <span className="text-slate-500">• Stock: {product.stock_quantity}</span>
+                          <span className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">
+                            <ShoppingBag className="w-3 h-3 text-slate-500" />
+                            <span>{product?.stock_quantity || 0} left</span>
+                          </span>
                         </div>
                       </div>
                     </div>
