@@ -501,7 +501,7 @@ export const WellnessPage = () => {
       cell: (row) => (
         <div className="flex items-center space-x-1.5">
           <button
-            onClick={() => setViewingProvId(row.id)}
+            onClick={() => setViewingProvId(row?.id)}
             className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             title="View Details"
           >
@@ -535,7 +535,7 @@ export const WellnessPage = () => {
           </button>
           {row?.is_published ? (
             <button
-              onClick={() => unpublishProviderMutation.mutate(row.id)}
+              onClick={() => row?.id && unpublishProviderMutation.mutate(row.id)}
               className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Unpublish Center"
             >
@@ -543,7 +543,7 @@ export const WellnessPage = () => {
             </button>
           ) : (
             <button
-              onClick={() => publishProviderMutation.mutate(row.id)}
+              onClick={() => row?.id && publishProviderMutation.mutate(row.id)}
               className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Publish Center"
             >
@@ -630,7 +630,7 @@ export const WellnessPage = () => {
       cell: (row) => (
         <div className="flex items-center space-x-1.5">
           <button
-            onClick={() => setViewingServId(row.id)}
+            onClick={() => setViewingServId(row?.id)}
             className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             title="View Details"
           >
@@ -661,7 +661,7 @@ export const WellnessPage = () => {
           </button>
           {row?.is_published ? (
             <button
-              onClick={() => unpublishServiceMutation.mutate(row.id)}
+              onClick={() => row?.id && unpublishServiceMutation.mutate(row.id)}
               className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Unpublish Service"
             >
@@ -669,7 +669,7 @@ export const WellnessPage = () => {
             </button>
           ) : (
             <button
-              onClick={() => publishServiceMutation.mutate(row.id)}
+              onClick={() => row?.id && publishServiceMutation.mutate(row.id)}
               className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Publish Service"
             >
@@ -751,7 +751,7 @@ export const WellnessPage = () => {
       cell: (row) => (
         <div className="flex items-center space-x-1.5">
           <button
-            onClick={() => setViewingBookId(row.id)}
+            onClick={() => setViewingBookId(row?.id)}
             className="p-1.5 rounded-lg text-slate-400 hover:text-sky-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             title="View Details"
           >
@@ -996,9 +996,9 @@ export const WellnessPage = () => {
                 className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
               >
                 <option value="">All Categories</option>
-                {categoryOptions.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
+                {categoryOptions.filter(Boolean).map((c, idx) => (
+                  <option key={c?.id || idx} value={c?.id || ''}>
+                    {c?.name || 'Category'}
                   </option>
                 ))}
               </select>
@@ -1011,9 +1011,9 @@ export const WellnessPage = () => {
                 className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 truncate"
               >
                 <option value="">All Centers</option>
-                {providerOptions.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.city})
+                {providerOptions.filter(Boolean).map((p, idx) => (
+                  <option key={p?.id || idx} value={p?.id || ''}>
+                    {p?.name || 'Center'} {p?.city ? `(${p.city})` : ''}
                   </option>
                 ))}
               </select>
@@ -1253,11 +1253,12 @@ export const WellnessPage = () => {
         isOpen={isEditCatOpen}
         onClose={() => setIsEditCatOpen(false)}
         title="Edit Master Wellness Category"
-        subtitle={`Updating details for category #${editingCat?.id?.slice(0, 8)}`}
+        subtitle={`Updating details for category #${editingCat?.id ? editingCat.id.slice(0, 8) : ''}`}
       >
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (!editingCat?.id) return;
             updateCategoryMutation.mutate({
               id: editingCat.id,
               data: {
@@ -1455,11 +1456,12 @@ export const WellnessPage = () => {
         isOpen={isEditProvOpen}
         onClose={() => setIsEditProvOpen(false)}
         title="Update Provider & Platform Curation Flags"
-        subtitle={`Managing curation settings for ${editingProv?.name}`}
+        subtitle={`Managing curation settings for ${editingProv?.name || 'Wellness Center'}`}
       >
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (!editingProv?.id) return;
             updateProviderMutation.mutate({
               id: editingProv.id,
               data: {
@@ -1597,30 +1599,30 @@ export const WellnessPage = () => {
 
             <div className="grid grid-cols-2 gap-4 border-t border-slate-100 dark:border-slate-800 pt-3">
               <div>
-                <span className="font-bold text-slate-900 dark:text-slate-100 block mb-1">Curated Services ({provDetail.services?.length || 0})</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100 block mb-1">Curated Services ({provDetail?.services?.length || 0})</span>
                 <ul className="space-y-1">
-                  {(provDetail.services || []).map((s) => (
-                    <li key={s.id} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-950 flex justify-between">
-                      <span>{s.name}</span>
-                      <span className="font-bold text-orange-600">{formatCurrency(s.price)}</span>
+                  {(Array.isArray(provDetail?.services) ? provDetail.services : []).map((s, idx) => (
+                    <li key={s?.id || idx} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-950 flex justify-between">
+                      <span>{s?.name || 'Service'}</span>
+                      <span className="font-bold text-orange-600">{formatCurrency(s?.price)}</span>
                     </li>
                   ))}
-                  {(!provDetail.services || provDetail.services.length === 0) && (
+                  {(!provDetail?.services || provDetail.services.length === 0) && (
                     <li className="text-slate-400">No services created yet</li>
                   )}
                 </ul>
               </div>
 
               <div>
-                <span className="font-bold text-slate-900 dark:text-slate-100 block mb-1">Practitioners ({provDetail.practitioners?.length || 0})</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100 block mb-1">Practitioners ({provDetail?.practitioners?.length || 0})</span>
                 <ul className="space-y-1">
-                  {(provDetail.practitioners || []).map((p) => (
-                    <li key={p.id} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-950 flex justify-between">
-                      <span>{p.full_name || p.name}</span>
-                      <span className="text-slate-400">{p.specialization || 'Healer'}</span>
+                  {(Array.isArray(provDetail?.practitioners) ? provDetail.practitioners : []).map((p, idx) => (
+                    <li key={p?.id || idx} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-950 flex justify-between">
+                      <span>{p?.full_name || p?.name || 'Practitioner'}</span>
+                      <span className="text-slate-400">{p?.specialization || 'Healer'}</span>
                     </li>
                   ))}
-                  {(!provDetail.practitioners || provDetail.practitioners.length === 0) && (
+                  {(!provDetail?.practitioners || provDetail.practitioners.length === 0) && (
                     <li className="text-slate-400">No practitioners linked</li>
                   )}
                 </ul>
@@ -1658,9 +1660,9 @@ export const WellnessPage = () => {
               onChange={(e) => setServForm({ ...servForm, provider_id: e.target.value })}
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
             >
-              {providerOptions.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({p.city})
+              {providerOptions.filter(Boolean).map((p, idx) => (
+                <option key={p?.id || idx} value={p?.id || ''}>
+                  {p?.name || 'Center'} {p?.city ? `(${p.city})` : ''}
                 </option>
               ))}
             </select>
@@ -1674,9 +1676,9 @@ export const WellnessPage = () => {
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
             >
               <option value="">Select Category...</option>
-              {categoryOptions.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
+              {categoryOptions.filter(Boolean).map((c, idx) => (
+                <option key={c?.id || idx} value={c?.id || ''}>
+                  {c?.name || 'Category'}
                 </option>
               ))}
             </select>
@@ -1761,11 +1763,12 @@ export const WellnessPage = () => {
         isOpen={isEditServOpen}
         onClose={() => setIsEditServOpen(false)}
         title="Update Treatment Service & Price"
-        subtitle={`Updating details for ${editingServ?.name}`}
+        subtitle={`Updating details for ${editingServ?.name || 'Treatment Service'}`}
       >
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (!editingServ?.id) return;
             updateServiceMutation.mutate({
               id: editingServ.id,
               data: {
@@ -1979,13 +1982,15 @@ export const WellnessPage = () => {
             </button>
             <button
               type="button"
-              disabled={updateBookingStatusMutation.isPending}
-              onClick={() =>
-                updateBookingStatusMutation.mutate({
-                  id: statusBookItem.id,
-                  status: targetStatus,
-                })
-              }
+              disabled={updateBookingStatusMutation.isPending || !statusBookItem?.id}
+              onClick={() => {
+                if (statusBookItem?.id) {
+                  updateBookingStatusMutation.mutate({
+                    id: statusBookItem.id,
+                    status: targetStatus,
+                  });
+                }
+              }}
               className="px-4 py-2 text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 rounded-xl shadow-md flex items-center space-x-2"
             >
               {updateBookingStatusMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -1999,9 +2004,9 @@ export const WellnessPage = () => {
       <ConfirmationModal
         isOpen={!!deletingCat}
         onClose={() => setDeletingCat(null)}
-        onConfirm={() => deleteCategoryMutation.mutate(deletingCat.id)}
+        onConfirm={() => deletingCat?.id && deleteCategoryMutation.mutate(deletingCat.id)}
         title="Delete Wellness Category"
-        description={`Are you sure you want to delete category "${deletingCat?.name}"? Category must not be referenced by existing services.`}
+        description={`Are you sure you want to delete category "${deletingCat?.name || ''}"? Category must not be referenced by existing services.`}
         isDanger
         isLoading={deleteCategoryMutation.isPending}
       />
@@ -2009,9 +2014,9 @@ export const WellnessPage = () => {
       <ConfirmationModal
         isOpen={!!deletingProv}
         onClose={() => setDeletingProv(null)}
-        onConfirm={() => deleteProviderMutation.mutate(deletingProv.id)}
+        onConfirm={() => deletingProv?.id && deleteProviderMutation.mutate(deletingProv.id)}
         title="Delete Wellness Center"
-        description={`Are you sure you want to delete provider "${deletingProv?.name}"? Center must not have active services.`}
+        description={`Are you sure you want to delete provider "${deletingProv?.name || ''}"? Center must not have active services.`}
         isDanger
         isLoading={deleteProviderMutation.isPending}
       />
@@ -2019,9 +2024,9 @@ export const WellnessPage = () => {
       <ConfirmationModal
         isOpen={!!deletingServ}
         onClose={() => setDeletingServ(null)}
-        onConfirm={() => deleteServiceMutation.mutate(deletingServ.id)}
+        onConfirm={() => deletingServ?.id && deleteServiceMutation.mutate(deletingServ.id)}
         title="Delete Treatment Service"
-        description={`Are you sure you want to delete service "${deletingServ?.name}"? Associated media and links will cascade.`}
+        description={`Are you sure you want to delete service "${deletingServ?.name || ''}"? Associated media and links will cascade.`}
         isDanger
         isLoading={deleteServiceMutation.isPending}
       />
