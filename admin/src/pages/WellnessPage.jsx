@@ -54,7 +54,7 @@ export const WellnessPage = () => {
     name: '',
     slug: '',
     description: '',
-    icon_url: '',
+    image_url: '',
     display_order: 0,
     is_active: true,
   });
@@ -370,8 +370,8 @@ export const WellnessPage = () => {
       cell: (row) => (
         <div className="flex items-center space-x-3">
           <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-950/50 flex items-center justify-center text-orange-600 dark:text-orange-400 font-bold flex-shrink-0">
-            {row?.icon_url ? (
-              <img src={row.icon_url} alt="" className="w-5 h-5 object-contain" />
+            {row?.image_url ? (
+              <img src={row.image_url} alt="" className="w-5 h-5 object-contain" />
             ) : (
               <Tag className="w-4 h-4" />
             )}
@@ -411,7 +411,7 @@ export const WellnessPage = () => {
                 name: row?.name || '',
                 slug: row?.slug || '',
                 description: row?.description || '',
-                icon_url: row?.icon_url || '',
+                image_url: row?.image_url || '',
                 display_order: row?.display_order ?? 0,
                 is_active: row?.is_active ?? true,
               });
@@ -705,16 +705,15 @@ export const WellnessPage = () => {
       ),
     },
     {
-      header: 'User',
-      accessorKey: 'user_name',
+      header: 'Customer',
+      accessorKey: 'user.name',
       cell: (row) => (
         <div className="flex items-center space-x-2">
           <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 text-xs font-bold">
             <User className="w-3.5 h-3.5" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{row?.user_name || row?.user_email || 'Customer'}</div>
-            <div className="text-[10px] text-slate-400">{row?.user_phone || row?.user_email || ''}</div>
+            <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{row?.user?.name || 'Customer'}</div>
           </div>
         </div>
       ),
@@ -723,8 +722,8 @@ export const WellnessPage = () => {
       header: 'Center & Service',
       cell: (row) => (
         <div>
-          <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{row?.service_name || 'Treatment Service'}</div>
-          <div className="text-[11px] text-slate-400">{row?.provider_name || 'Wellness Center'}</div>
+          <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{row?.service?.name || 'Treatment Service'}</div>
+          <div className="text-[11px] text-slate-400">{row?.provider?.name || 'Wellness Center'}</div>
         </div>
       ),
     },
@@ -737,7 +736,7 @@ export const WellnessPage = () => {
             <Calendar className="w-3 h-3 text-orange-500" />
             <span>{row?.booking_date || 'N/A'}</span>
           </div>
-          <div className="text-[10px] text-slate-400">{row?.slot_time || row?.start_time || 'Scheduled Slot'}</div>
+          <div className="text-[10px] text-slate-400">{row?.start_time || 'Scheduled Slot'}{row?.end_time ? ` - ${row.end_time}` : ''}</div>
         </div>
       ),
     },
@@ -844,7 +843,7 @@ export const WellnessPage = () => {
                   name: '',
                   slug: '',
                   description: '',
-                  icon_url: '',
+                  image_url: '',
                   display_order: 0,
                   is_active: true,
                 });
@@ -1210,8 +1209,8 @@ export const WellnessPage = () => {
           </div>
 
           <ImagePreviewUpload
-            value={catForm.icon_url}
-            onChange={(url) => setCatForm({ ...catForm, icon_url: url })}
+            value={catForm.image_url}
+            onChange={(url) => setCatForm({ ...catForm, image_url: url })}
             label="Category Icon / Asset URL"
           />
 
@@ -1313,8 +1312,8 @@ export const WellnessPage = () => {
           </div>
 
           <ImagePreviewUpload
-            value={catForm.icon_url}
-            onChange={(url) => setCatForm({ ...catForm, icon_url: url })}
+            value={catForm.image_url}
+            onChange={(url) => setCatForm({ ...catForm, image_url: url })}
             label="Category Icon / Asset URL"
           />
 
@@ -1361,7 +1360,8 @@ export const WellnessPage = () => {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            createProviderMutation.mutate(provForm);
+            const { rating, is_published, is_featured, ...creationPayload } = provForm;
+            createProviderMutation.mutate(creationPayload);
           }}
           className="space-y-4"
         >
@@ -1644,8 +1644,9 @@ export const WellnessPage = () => {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            createServiceMutation.mutate({
-              ...servForm,
+            const { is_published, is_featured, ...creationPayload } = servForm;
+              createServiceMutation.mutate({
+                ...creationPayload,
               price: Number(servForm.price) || 0,
               duration_minutes: Number(servForm.duration_minutes) || 60,
             });
@@ -2033,3 +2034,5 @@ export const WellnessPage = () => {
     </div>
   );
 };
+
+

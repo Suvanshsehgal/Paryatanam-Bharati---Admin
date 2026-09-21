@@ -25,8 +25,8 @@ export const PrasadPage = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('shrines'); // 'shrines' | 'offerings' | 'orders'
-  const [orderStatusFilter, setOrderStatusFilter] = useState('ALL'); // 'ALL' | 'PENDING' | 'DISPATCHED' | 'DELIVERED'
+  const [activeTab, setActiveTab] = useState('shrines');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('ALL');
 
   // Modals state
   const [isTempleModalOpen, setIsTempleModalOpen] = useState(false);
@@ -42,13 +42,12 @@ export const PrasadPage = () => {
     city: '',
     state: '',
     country: 'India',
-    region: '',
+    region: 'NORTH_INDIA',
     latitude: '',
     longitude: '',
     open_time: '',
     close_time: '',
     is_featured: false,
-    is_published: true,
     is_active: true,
   });
 
@@ -61,7 +60,6 @@ export const PrasadPage = () => {
     daily_capacity: '',
     image_url: '',
     is_featured: false,
-    is_published: true,
     is_active: true,
   });
 
@@ -78,9 +76,15 @@ export const PrasadPage = () => {
 
   // Mutations
   const createTempleMutation = useMutation({
-    mutationFn: (data) => prasadApi.createTemple(data),
+    mutationFn: async (data) => {
+      const created = await prasadApi.createTemple(data);
+      if (created?.data?.id) {
+        await prasadApi.publishTemple(created.data.id);
+      }
+      return created;
+    },
     onSuccess: () => {
-      toast.success('Temple Shrine Registered', 'New sacred shrine added to Prasad database.');
+      toast.success('Temple Shrine Registered & Published', 'New sacred shrine added and published to Prasad database.');
       queryClient.invalidateQueries({ queryKey: ['temples'] });
       setIsTempleModalOpen(false);
     },
@@ -88,9 +92,15 @@ export const PrasadPage = () => {
   });
 
   const addOfferingMutation = useMutation({
-    mutationFn: ({ templeId, data }) => prasadApi.addOffering(templeId, data),
+    mutationFn: async ({ templeId, data }) => {
+      const created = await prasadApi.addOffering(templeId, data);
+      if (created?.data?.id) {
+        await prasadApi.publishOffering(created.data.id);
+      }
+      return created;
+    },
     onSuccess: () => {
-      toast.success('Offering Added', 'Prasadam offering pack added to temple.');
+      toast.success('Offering Added & Published', 'Prasadam offering pack added and published.');
       queryClient.invalidateQueries({ queryKey: ['temples'] });
       setActiveOfferingTemple(null);
     },
@@ -99,7 +109,14 @@ export const PrasadPage = () => {
 
   const handleSaveTemple = (e) => {
     e.preventDefault();
-    createTempleMutation.mutate(templeForm);
+    const payload = { ...templeForm };
+    if (!payload.open_time) delete payload.open_time;
+    else if (payload.open_time.length === 5) payload.open_time += ':00';
+
+    if (!payload.close_time) delete payload.close_time;
+    else if (payload.close_time.length === 5) payload.close_time += ':00';
+    
+    createTempleMutation.mutate(payload);
   };
 
   const handleSaveOffering = (e) => {
@@ -111,32 +128,31 @@ export const PrasadPage = () => {
   // Order columns
   const orderColumns = [
     {
-      header: 'Order Reference',
-      accessorKey: 'order_number',
+      header: 'Booking Reference',
+      accessorKey: 'booking_reference',
       cell: (order) => (
         <div>
-          <span className="font-mono font-bold text-orange-600 dark:text-orange-400">{order.order_number}</span>
+          <span className="font-mono font-bold text-orange-600 dark:text-orange-400">{order.booking_reference}</span>
           <p className="text-[11px] text-slate-500">{formatDate(order.created_at)}</p>
         </div>
       ),
     },
     {
       header: 'Customer Details',
-      accessorKey: 'user_name',
+      accessorKey: 'user.name',
       cell: (order) => (
         <div>
-          <h4 className="font-bold text-slate-900 dark:text-slate-100">{order.user_name}</h4>
-          <p className="text-xs text-slate-500 font-mono">{order.user_email}</p>
+          <h4 className="font-bold text-slate-900 dark:text-slate-100">{order.user?.name || 'Unknown User'}</h4>
         </div>
       ),
     },
     {
       header: 'Temple Shrine & Pack',
-      accessorKey: 'temple_name',
+      accessorKey: 'temple.name',
       cell: (order) => (
         <div>
-          <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs">{order.temple_name}</h4>
-          <p className="text-xs text-slate-500">{order.offering_name} (x{order.quantity})</p>
+          <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs">{order.temple?.name || 'Unknown Temple'}</h4>
+          <p className="text-xs text-slate-500">{order.offering?.name || 'Unknown Offering'} (x{order.quantity})</p>
         </div>
       ),
     },
@@ -233,7 +249,7 @@ export const PrasadPage = () => {
                       </div>
                       <div className="flex items-center space-x-1">
                         <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{temple.open_time} - {temple.close_time}</span>
+                        <span>{temple.open_time || 'N/A'} - {temple.close_time || 'N/A'}</span>
                       </div>
                     </div>
                   </div>
@@ -263,7 +279,7 @@ export const PrasadPage = () => {
           {/* Filter Pills */}
           <div className="flex items-center space-x-2">
             <span className="text-xs font-semibold text-slate-500">Status:</span>
-            {['ALL', 'PENDING', 'DISPATCHED', 'DELIVERED'].map((st) => (
+            {['ALL', 'CONFIRMED', 'COMPLETED', 'CANCELLED'].map((st) => (
               <button
                 key={st}
                 onClick={() => setOrderStatusFilter(st)}
@@ -314,7 +330,22 @@ export const PrasadPage = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Region</label>
+              <select
+                value={templeForm.region}
+                onChange={(e) => setTempleForm({ ...templeForm, region: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+              >
+                <option value="NORTH_INDIA">North India</option>
+                <option value="SOUTH_INDIA">South India</option>
+                <option value="EAST_INDIA">East India</option>
+                <option value="WEST_INDIA">West India</option>
+                <option value="CENTRAL_INDIA">Central India</option>
+                <option value="NORTHEAST_INDIA">Northeast India</option>
+              </select>
+            </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">City</label>
               <input
@@ -342,7 +373,27 @@ export const PrasadPage = () => {
             </div>
           </div>
 
-          {/* GPS Coordinates Picker */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Open Time</label>
+              <input
+                type="time"
+                value={templeForm.open_time}
+                onChange={(e) => setTempleForm({ ...templeForm, open_time: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Close Time</label>
+              <input
+                type="time"
+                value={templeForm.close_time}
+                onChange={(e) => setTempleForm({ ...templeForm, close_time: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">

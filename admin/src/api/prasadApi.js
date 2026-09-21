@@ -4,9 +4,8 @@ export const prasadApi = {
   getTemples: async () => {
     try {
       const response = await apiClient.get('/admin/prasad/temples');
-      const data = response.data;
-      if (Array.isArray(data)) return data;
-      return data?.data || data?.items || [];
+      // Extract array from paginated response
+      return response.data?.data || [];
     } catch (err) {
       if (err.status === 404) return [];
       throw err;
@@ -18,6 +17,11 @@ export const prasadApi = {
     return response.data;
   },
 
+  publishTemple: async (id) => {
+    const response = await apiClient.post(`/admin/prasad/temples/${id}/publish`);
+    return response.data;
+  },
+
   addOffering: async (templeId, offeringData) => {
     const response = await apiClient.post('/admin/prasad/offerings', {
       temple_id: templeId,
@@ -26,14 +30,17 @@ export const prasadApi = {
     return response.data;
   },
 
+  publishOffering: async (id) => {
+    const response = await apiClient.post(`/admin/prasad/offerings/${id}/publish`);
+    return response.data;
+  },
+
   getOfferings: async (templeId) => {
     try {
       const response = await apiClient.get('/admin/prasad/offerings', {
         params: { temple_id: templeId || undefined },
       });
-      const data = response.data;
-      if (Array.isArray(data)) return data;
-      return data?.data || data?.items || [];
+      return response.data?.data || [];
     } catch (err) {
       if (err.status === 404) return [];
       throw err;
@@ -45,9 +52,7 @@ export const prasadApi = {
       const response = await apiClient.get('/admin/prasad/bookings', {
         params: { status: status && status !== 'ALL' ? status : undefined },
       });
-      const data = response.data;
-      if (Array.isArray(data)) return data;
-      return data?.data || data?.items || [];
+      return response.data?.data || [];
     } catch (err) {
       if (err.status === 404) return [];
       throw err;
