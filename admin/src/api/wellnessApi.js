@@ -130,7 +130,7 @@ export const wellnessApi = {
   },
 
   createProvider: async (providerData) => {
-    const response = await apiClient.post('/admin/wellness/providers', providerData);
+    const response = await apiClient.post('/wellness/vendor/providers', providerData);
     return response.data?.data || response.data;
   },
 
@@ -216,7 +216,7 @@ export const wellnessApi = {
   },
 
   addService: async (serviceData) => {
-    const response = await apiClient.post('/admin/wellness/services', serviceData);
+    const response = await apiClient.post('/wellness/vendor/services', serviceData);
     return response.data?.data || response.data;
   },
 
@@ -307,3 +307,4 @@ export const wellnessApi = {
     return response.data?.data || response.data;
   },
 };
+
