@@ -1673,7 +1673,7 @@ export const WellnessPage = () => {
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Category</label>
             <select
               value={servForm.category_id}
-              onChange={(e) => setServForm({ ...servForm, category_id: e.target.value })}
+              onChange={(e) => setServForm({ ...servForm, category_id: e.target.value })} required
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
             >
               <option value="">Select Category...</option>
@@ -2034,5 +2034,6 @@ export const WellnessPage = () => {
     </div>
   );
 };
+
 
 

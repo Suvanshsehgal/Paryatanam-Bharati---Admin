@@ -352,10 +352,9 @@ export const PrasadPage = () => {
                             onClick={() => {
                               // Backend strict requirement check
                               const hasImages = temple.media && temple.media.length > 0;
-                              if (!temple.description || !hasImages) {
+                              if (!temple.city || !temple.state || !temple.description || !hasImages) {
                                 toast.error(
-                                  'Cannot publish',
-                                  'Please ensure you have added a description and uploaded at least one photo for this temple.'
+                                  'Cannot publish yet', 'Please edit the temple to add a City, State, Description, and upload at least one Photo.'
                                 );
                                 return;
                               }
@@ -363,7 +362,7 @@ export const PrasadPage = () => {
                             }}
                             disabled={publishTempleMutation.isPending}
                             className={`px-2 py-1 text-[10px] font-bold rounded transition-colors ${
-                              !temple.description || !temple.media || temple.media.length === 0
+                              !temple.city || !temple.state || !temple.description || !temple.media || temple.media.length === 0
                                 ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed'
                                 : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                             }`}
@@ -505,9 +504,7 @@ export const PrasadPage = () => {
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">City</label>
               <input
-                type="text"
-                required
-                value={templeForm.city}
+                type="text" value={templeForm.city}
                 onChange={(e) => setTempleForm({ ...templeForm, city: e.target.value })}
                 placeholder="Amritsar"
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
@@ -520,7 +517,7 @@ export const PrasadPage = () => {
                 onChange={(e) => setTempleForm({ ...templeForm, state: e.target.value })}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
               >
-                {INDIAN_STATES.map((s) => (
+                <option value="">-- Select State --</option> {INDIAN_STATES.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
@@ -592,9 +589,7 @@ export const PrasadPage = () => {
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Detailed Description</label>
-            <textarea
-              required
-              value={templeForm.description}
+            <textarea value={templeForm.description}
               onChange={(e) => setTempleForm({ ...templeForm, description: e.target.value })}
               placeholder="Full historical and spiritual description of the temple..."
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
@@ -743,3 +738,4 @@ export const PrasadPage = () => {
     </div>
   );
 };
+
