@@ -470,9 +470,7 @@ export const PrasadPage = () => {
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Temple Name</label>
             <input
-              type="text"
-              required
-              value={templeForm.name}
+              type="text" value={templeForm.name}
               onChange={(e) =>
                 setTempleForm({
                   ...templeForm,
@@ -554,9 +552,7 @@ export const PrasadPage = () => {
               </label>
               <input
                 type="number"
-                step="any"
-                required
-                value={templeForm.latitude}
+                step="any" value={templeForm.latitude}
                 onChange={(e) => setTempleForm({ ...templeForm, latitude: parseFloat(e.target.value) })}
                 className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-mono"
               />
@@ -567,9 +563,7 @@ export const PrasadPage = () => {
               </label>
               <input
                 type="number"
-                step="any"
-                required
-                value={templeForm.longitude}
+                step="any" value={templeForm.longitude}
                 onChange={(e) => setTempleForm({ ...templeForm, longitude: parseFloat(e.target.value) })}
                 className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-mono"
               />
@@ -628,9 +622,7 @@ export const PrasadPage = () => {
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Offering Name</label>
             <input
-              type="text"
-              required
-              value={offeringForm.name}
+              type="text" value={offeringForm.name}
               onChange={(e) => setOfferingForm({ ...offeringForm, name: e.target.value })}
               placeholder="e.g. Amritsar Karah Prasad Pack & Rumala Sahib"
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
@@ -641,9 +633,7 @@ export const PrasadPage = () => {
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Price (₹)</label>
               <input
-                type="number"
-                required
-                value={offeringForm.price}
+                type="number" value={offeringForm.price}
                 onChange={(e) => setOfferingForm({ ...offeringForm, price: parseFloat(e.target.value) })}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
               />
@@ -710,9 +700,7 @@ export const PrasadPage = () => {
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Select Image File</label>
             <input
               type="file"
-              accept="image/*"
-              required
-              onChange={(e) => setMediaFile(e.target.files[0])}
+              accept="image/*" onChange={(e) => setMediaFile(e.target.files[0])}
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
             />
           </div>
@@ -738,4 +726,5 @@ export const PrasadPage = () => {
     </div>
   );
 };
+
 
