@@ -190,19 +190,9 @@ export const PrasadPage = () => {
         <div className="flex items-center space-x-2">
           {!row.is_published && (
             <button
-              onClick={() => {
-                if (!row.price || row.price <= 0) {
-                  toast.error('Cannot publish', 'Offering price must be greater than 0.');
-                  return;
-                }
-                publishOfferingMutation.mutate(row.id);
-              }}
+              onClick={() => publishOfferingMutation.mutate(row.id)}
               disabled={publishOfferingMutation.isPending}
-              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors border ${
-                !row.price || row.price <= 0
-                  ? 'bg-slate-100 text-slate-400 border-slate-200 dark:bg-slate-800 dark:border-slate-700 cursor-not-allowed'
-                  : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 border-emerald-200 dark:border-emerald-800/60'
-              }`}
+              className="px-2.5 py-1 text-xs font-bold rounded-lg text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 transition-colors border border-emerald-200 dark:border-emerald-800/60"
             >
               Publish
             </button>
@@ -349,23 +339,9 @@ export const PrasadPage = () => {
                         <StatusBadge status={temple.is_published ? 'APPROVED' : 'DRAFT'} />
                         {!temple.is_published && (
                           <button
-                            onClick={() => {
-                              // Backend strict requirement check
-                              const hasImages = temple.media && temple.media.length > 0;
-                              if (!temple.city || !temple.state || !temple.description || !hasImages) {
-                                toast.error(
-                                  'Cannot publish yet', 'Please edit the temple to add a City, State, Description, and upload at least one Photo.'
-                                );
-                                return;
-                              }
-                              publishTempleMutation.mutate(temple.id);
-                            }}
+                            onClick={() => publishTempleMutation.mutate(temple.id)}
                             disabled={publishTempleMutation.isPending}
-                            className={`px-2 py-1 text-[10px] font-bold rounded transition-colors ${
-                              !temple.city || !temple.state || !temple.description || !temple.media || temple.media.length === 0
-                                ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed'
-                                : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                            }`}
+                            className="px-2 py-1 text-[10px] font-bold rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors"
                           >
                             Publish
                           </button>
