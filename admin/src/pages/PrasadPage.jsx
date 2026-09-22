@@ -18,7 +18,9 @@ import {
   CheckCircle2,
   PackageCheck,
   Loader2,
-  Navigation
+  Navigation,
+  User,
+  Calendar
 } from 'lucide-react';
 
 export const PrasadPage = () => {
@@ -69,6 +71,11 @@ export const PrasadPage = () => {
     queryFn: () => prasadApi.getTemples(),
   });
 
+  const { data: offerings, isLoading: loadingOfferings } = useQuery({
+    queryKey: ['offerings'],
+    queryFn: () => prasadApi.getOfferings(),
+  });
+
   const { data: orders, isLoading: loadingOrders } = useQuery({
     queryKey: ['prasadOrders', orderStatusFilter],
     queryFn: () => prasadApi.getPrasadOrders({ status: orderStatusFilter }),
@@ -77,34 +84,44 @@ export const PrasadPage = () => {
   // Mutations
   const createTempleMutation = useMutation({
     mutationFn: async (data) => {
-      const created = await prasadApi.createTemple(data);
-      if (created?.data?.id) {
-        await prasadApi.publishTemple(created.data.id);
-      }
-      return created;
+      return await prasadApi.createTemple(data);
     },
     onSuccess: () => {
-      toast.success('Temple Shrine Registered & Published', 'New sacred shrine added and published to Prasad database.');
+      toast.success('Temple Shrine Registered', 'New sacred shrine added as Draft.');
       queryClient.invalidateQueries({ queryKey: ['temples'] });
       setIsTempleModalOpen(false);
     },
     onError: (err) => toast.error('Creation Failed', err.detail || err.message),
   });
 
+  const publishTempleMutation = useMutation({
+    mutationFn: async (id) => prasadApi.publishTemple(id),
+    onSuccess: () => {
+      toast.success('Temple Published', 'Temple is now live.');
+      queryClient.invalidateQueries({ queryKey: ['temples'] });
+    },
+    onError: (err) => toast.error('Publish Failed', err.detail || err.message),
+  });
+
   const addOfferingMutation = useMutation({
     mutationFn: async ({ templeId, data }) => {
-      const created = await prasadApi.addOffering(templeId, data);
-      if (created?.data?.id) {
-        await prasadApi.publishOffering(created.data.id);
-      }
-      return created;
+      return await prasadApi.addOffering(templeId, data);
     },
     onSuccess: () => {
-      toast.success('Offering Added & Published', 'Prasadam offering pack added and published.');
-      queryClient.invalidateQueries({ queryKey: ['temples'] });
+      toast.success('Offering Added', 'Prasadam offering pack added as Draft.');
+      queryClient.invalidateQueries({ queryKey: ['offerings'] });
       setActiveOfferingTemple(null);
     },
     onError: (err) => toast.error('Add Offering Failed', err.detail || err.message),
+  });
+
+  const publishOfferingMutation = useMutation({
+    mutationFn: async (id) => prasadApi.publishOffering(id),
+    onSuccess: () => {
+      toast.success('Offering Published', 'Offering is now live.');
+      queryClient.invalidateQueries({ queryKey: ['offerings'] });
+    },
+    onError: (err) => toast.error('Publish Failed', err.detail || err.message),
   });
 
   const handleSaveTemple = (e) => {
@@ -125,6 +142,53 @@ export const PrasadPage = () => {
     addOfferingMutation.mutate({ templeId: activeOfferingTemple.id, data: offeringForm });
   };
 
+  // Offering columns
+  const offeringColumns = [
+    {
+      header: 'Offering Name',
+      accessorKey: 'name',
+      cell: (row) => (
+        <div className="flex items-center space-x-3">
+          {row?.image_url && (
+            <img src={row.image_url} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-slate-200 dark:border-slate-800" />
+          )}
+          <div className="font-bold text-slate-900 dark:text-slate-100">{row.name}</div>
+        </div>
+      ),
+    },
+    {
+      header: 'Temple',
+      accessorKey: 'temple_name',
+      cell: (row) => <div className="text-xs text-slate-600 dark:text-slate-400">{row.temple?.name || 'N/A'}</div>,
+    },
+    {
+      header: 'Price',
+      accessorKey: 'price',
+      cell: (row) => <span className="font-bold text-xs">{formatCurrency(row.price)}</span>,
+    },
+    {
+      header: 'Status',
+      accessorKey: 'is_published',
+      cell: (row) => <StatusBadge status={row.is_published ? 'APPROVED' : 'DRAFT'} />,
+    },
+    {
+      header: 'Actions',
+      cell: (row) => (
+        <div className="flex items-center space-x-2">
+          {!row.is_published && (
+            <button
+              onClick={() => publishOfferingMutation.mutate(row.id)}
+              disabled={publishOfferingMutation.isPending}
+              className="px-2.5 py-1 text-xs font-bold rounded-lg text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 transition-colors border border-emerald-200 dark:border-emerald-800/60"
+            >
+              Publish
+            </button>
+          )}
+        </div>
+      ),
+    },
+  ];
+
   // Order columns
   const orderColumns = [
     {
@@ -138,28 +202,40 @@ export const PrasadPage = () => {
       ),
     },
     {
-      header: 'Customer Details',
+      header: 'Customer',
       accessorKey: 'user.name',
-      cell: (order) => (
-        <div>
-          <h4 className="font-bold text-slate-900 dark:text-slate-100">{order.user?.name || 'Unknown User'}</h4>
+      cell: (row) => (
+        <div className="flex items-center space-x-2">
+          <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 text-xs font-bold">
+            <User className="w-3.5 h-3.5" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{row?.user?.name || 'Customer'}</div>
+          </div>
         </div>
       ),
     },
     {
-      header: 'Temple Shrine & Pack',
-      accessorKey: 'temple.name',
-      cell: (order) => (
+      header: 'Center & Service',
+      cell: (row) => (
         <div>
-          <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs">{order.temple?.name || 'Unknown Temple'}</h4>
-          <p className="text-xs text-slate-500">{order.offering?.name || 'Unknown Offering'} (x{order.quantity})</p>
+          <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{row?.service?.name || 'Treatment Service'}</div>
+          <div className="text-[11px] text-slate-400">{row?.provider?.name || 'Wellness Center'}</div>
         </div>
       ),
     },
     {
-      header: 'Total Price',
-      accessorKey: 'total_amount',
-      cell: (order) => <span className="font-bold text-xs">{formatCurrency(order.total_amount)}</span>,
+      header: 'Appointment Date',
+      accessorKey: 'booking_date',
+      cell: (row) => (
+        <div className="text-xs text-slate-700 dark:text-slate-300">
+          <div className="font-semibold flex items-center space-x-1">
+            <Calendar className="w-3 h-3 text-orange-500" />
+            <span>{row?.booking_date || 'N/A'}</span>
+          </div>
+          <div className="text-[10px] text-slate-400">{row?.start_time || 'Scheduled Slot'}{row?.end_time ? ` - ${row.end_time}` : ''}</div>
+        </div>
+      ),
     },
     {
       header: 'Fulfillment Status',
@@ -191,6 +267,16 @@ export const PrasadPage = () => {
             }`}
           >
             Temple Shrines ({temples?.length || 0})
+          </button>
+          <button
+            onClick={() => setActiveTab('offerings')}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'offerings'
+                ? 'bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+            }`}
+          >
+            Offerings ({offerings?.length || 0})
           </button>
           <button
             onClick={() => setActiveTab('orders')}
@@ -236,7 +322,18 @@ export const PrasadPage = () => {
                       <span className="px-2.5 py-0.5 text-[10px] font-extrabold uppercase rounded bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
                         {temple.region || 'SACRED SHRINE'}
                       </span>
-                      <StatusBadge status={temple.is_published ? 'APPROVED' : 'DRAFT'} />
+                      <div className="flex items-center space-x-2">
+                        <StatusBadge status={temple.is_published ? 'APPROVED' : 'DRAFT'} />
+                        {!temple.is_published && (
+                          <button
+                            onClick={() => publishTempleMutation.mutate(temple.id)}
+                            disabled={publishTempleMutation.isPending}
+                            className="px-2 py-1 text-[10px] font-bold rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors"
+                          >
+                            Publish
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{temple.name}</h3>
@@ -273,7 +370,20 @@ export const PrasadPage = () => {
         </div>
       )}
 
-      {/* TAB 2: Prasadam Orders */}
+      {/* TAB 2: Offerings */}
+      {activeTab === 'offerings' && (
+        <div className="space-y-4">
+          <DataTable
+            columns={offeringColumns}
+            data={offerings || []}
+            isLoading={loadingOfferings}
+            emptyTitle="No offerings found"
+            emptyDescription="No prasadam offerings registered."
+          />
+        </div>
+      )}
+
+      {/* TAB 3: Prasadam Orders */}
       {activeTab === 'orders' && (
         <div className="space-y-4">
           {/* Filter Pills */}
