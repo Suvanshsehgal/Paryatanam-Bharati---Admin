@@ -17,6 +17,15 @@ export const prasadApi = {
     return response.data;
   },
 
+  uploadTempleMedia: async (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post(`/admin/prasad/temples/${id}/media`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
   publishTemple: async (id) => {
     const response = await apiClient.post(`/admin/prasad/temples/${id}/publish`);
     return response.data;
@@ -59,3 +68,4 @@ export const prasadApi = {
     }
   },
 };
+
