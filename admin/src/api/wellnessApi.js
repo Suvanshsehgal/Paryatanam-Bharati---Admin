@@ -24,11 +24,8 @@ export const wellnessApi = {
       } else if (Array.isArray(resData?.data)) {
         items = resData.data;
         meta = resData.pagination || resData.meta || {};
-      } else if (Array.isArray(resData?.items)) {
-        items = resData.items;
-        meta = resData.pagination || resData.meta || {};
       } else if (resData?.data && typeof resData.data === 'object') {
-        items = Array.isArray(resData.data.items) ? resData.data.items : [];
+        items = Array.isArray(resData.data.data) ? resData.data.data : (Array.isArray(resData.data.items) ? resData.data.items : []);
         meta = resData.data.pagination || resData.data.meta || {};
       }
 
@@ -53,6 +50,7 @@ export const wellnessApi = {
   },
 
   createCategory: async (categoryData) => {
+    // Only admins create categories
     const response = await apiClient.post('/admin/wellness/categories', categoryData);
     return response.data?.data || response.data;
   },
@@ -77,7 +75,6 @@ export const wellnessApi = {
         params: {
           page: Number(opts.page || 1),
           limit: Number(opts.limit || 10),
-          owner_id: opts.owner_id || undefined,
           city: opts.city || undefined,
           state: opts.state || undefined,
           is_published: opts.is_published !== undefined ? opts.is_published : undefined,
@@ -94,9 +91,6 @@ export const wellnessApi = {
         items = resData;
       } else if (Array.isArray(resData?.data)) {
         items = resData.data;
-        meta = resData.pagination || resData.meta || {};
-      } else if (Array.isArray(resData?.items)) {
-        items = resData.items;
         meta = resData.pagination || resData.meta || {};
       } else if (resData?.data && typeof resData.data === 'object') {
         items = Array.isArray(resData.data.items) ? resData.data.items : [];
@@ -129,19 +123,10 @@ export const wellnessApi = {
     return response.data?.data || response.data;
   },
 
-  createProvider: async (providerData) => {
-    const response = await apiClient.post('/wellness/vendor/providers', providerData);
-    return response.data?.data || response.data;
-  },
-
   updateProvider: async (id, providerData) => {
+    // Only patching curation flags
     const response = await apiClient.patch(`/admin/wellness/providers/${id}`, providerData);
     return response.data?.data || response.data;
-  },
-
-  deleteProvider: async (id) => {
-    const response = await apiClient.delete(`/admin/wellness/providers/${id}`);
-    return response.data;
   },
 
   publishProvider: async (id) => {
@@ -152,6 +137,11 @@ export const wellnessApi = {
   unpublishProvider: async (id) => {
     const response = await apiClient.post(`/admin/wellness/providers/${id}/unpublish`);
     return response.data?.data || response.data;
+  },
+
+  deleteProvider: async (id) => {
+    const response = await apiClient.delete(`/admin/wellness/providers/${id}`);
+    return response.data;
   },
 
   // ---------------------------------------------------------------------------
@@ -180,9 +170,6 @@ export const wellnessApi = {
         items = resData;
       } else if (Array.isArray(resData?.data)) {
         items = resData.data;
-        meta = resData.pagination || resData.meta || {};
-      } else if (Array.isArray(resData?.items)) {
-        items = resData.items;
         meta = resData.pagination || resData.meta || {};
       } else if (resData?.data && typeof resData.data === 'object') {
         items = Array.isArray(resData.data.items) ? resData.data.items : [];
@@ -215,19 +202,9 @@ export const wellnessApi = {
     return response.data?.data || response.data;
   },
 
-  addService: async (serviceData) => {
-    const response = await apiClient.post('/wellness/vendor/services', serviceData);
-    return response.data?.data || response.data;
-  },
-
   updateService: async (id, serviceData) => {
     const response = await apiClient.patch(`/admin/wellness/services/${id}`, serviceData);
     return response.data?.data || response.data;
-  },
-
-  deleteService: async (id) => {
-    const response = await apiClient.delete(`/admin/wellness/services/${id}`);
-    return response.data;
   },
 
   publishService: async (id) => {
@@ -240,6 +217,11 @@ export const wellnessApi = {
     return response.data?.data || response.data;
   },
 
+  deleteService: async (id) => {
+    const response = await apiClient.delete(`/admin/wellness/services/${id}`);
+    return response.data;
+  },
+
   // ---------------------------------------------------------------------------
   // 4. Platform-Wide Bookings Supervision (/admin/wellness/bookings)
   // ---------------------------------------------------------------------------
@@ -250,12 +232,7 @@ export const wellnessApi = {
         params: {
           page: Number(opts.page || 1),
           limit: Number(opts.limit || 10),
-          user_id: opts.user_id || undefined,
-          service_id: opts.service_id || undefined,
-          provider_id: opts.provider_id || undefined,
-          practitioner_id: opts.practitioner_id || undefined,
           status: opts.status || undefined,
-          booking_date: opts.booking_date || undefined,
         },
       });
 
@@ -267,9 +244,6 @@ export const wellnessApi = {
         items = resData;
       } else if (Array.isArray(resData?.data)) {
         items = resData.data;
-        meta = resData.pagination || resData.meta || {};
-      } else if (Array.isArray(resData?.items)) {
-        items = resData.items;
         meta = resData.pagination || resData.meta || {};
       } else if (resData?.data && typeof resData.data === 'object') {
         items = Array.isArray(resData.data.items) ? resData.data.items : [];
@@ -307,4 +281,3 @@ export const wellnessApi = {
     return response.data?.data || response.data;
   },
 };
-

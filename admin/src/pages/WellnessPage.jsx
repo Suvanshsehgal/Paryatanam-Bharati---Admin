@@ -77,8 +77,7 @@ export const WellnessPage = () => {
 
   const [viewingProvId, setViewingProvId] = useState(null);
   const [isEditProvOpen, setIsEditProvOpen] = useState(false);
-  const [isCreateProvOpen, setIsCreateProvOpen] = useState(false);
-  const [editingProv, setEditingProv] = useState(null);
+    const [editingProv, setEditingProv] = useState(null);
   const [deletingProv, setDeletingProv] = useState(null);
 
   const [provForm, setProvForm] = useState({
@@ -131,8 +130,7 @@ export const WellnessPage = () => {
 
   const [viewingServId, setViewingServId] = useState(null);
   const [isEditServOpen, setIsEditServOpen] = useState(false);
-  const [isCreateServOpen, setIsCreateServOpen] = useState(false);
-  const [editingServ, setEditingServ] = useState(null);
+    const [editingServ, setEditingServ] = useState(null);
   const [deletingServ, setDeletingServ] = useState(null);
 
   const [servForm, setServForm] = useState({
@@ -249,17 +247,7 @@ export const WellnessPage = () => {
   });
 
   // Provider Mutations
-  const createProviderMutation = useMutation({
-    mutationFn: (data) => wellnessApi.createProvider(data),
-    onSuccess: () => {
-      toast.success('Center Created', 'Wellness center registered successfully.');
-      queryClient.invalidateQueries({ queryKey: ['wellnessProviders'] });
-      queryClient.invalidateQueries({ queryKey: ['allWellnessProviders'] });
-      setIsCreateProvOpen(false);
-    },
-    onError: (err) => toast.error('Creation Error', err.detail || err.message),
-  });
-
+  
   const updateProviderMutation = useMutation({
     mutationFn: ({ id, data }) => wellnessApi.updateProvider(id, data),
     onSuccess: () => {
@@ -299,16 +287,7 @@ export const WellnessPage = () => {
   });
 
   // Service Mutations
-  const createServiceMutation = useMutation({
-    mutationFn: (data) => wellnessApi.addService(data),
-    onSuccess: () => {
-      toast.success('Service Created', 'Wellness service added successfully.');
-      queryClient.invalidateQueries({ queryKey: ['wellnessServices'] });
-      setIsCreateServOpen(false);
-    },
-    onError: (err) => toast.error('Creation Error', err.detail || err.message),
-  });
-
+  
   const updateServiceMutation = useMutation({
     mutationFn: ({ id, data }) => wellnessApi.updateService(id, data),
     onSuccess: () => {
@@ -705,7 +684,7 @@ export const WellnessPage = () => {
       ),
     },
     {
-      header: 'Customer',
+      header: 'Customer Profile',
       accessorKey: 'user.name',
       cell: (row) => (
         <div className="flex items-center space-x-2">
@@ -719,7 +698,7 @@ export const WellnessPage = () => {
       ),
     },
     {
-      header: 'Center & Service',
+      header: 'Service & Provider',
       cell: (row) => (
         <div>
           <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{row?.service?.name || 'Treatment Service'}</div>
@@ -728,7 +707,7 @@ export const WellnessPage = () => {
       ),
     },
     {
-      header: 'Appointment Date',
+      header: 'Appointment Time',
       accessorKey: 'booking_date',
       cell: (row) => (
         <div className="text-xs text-slate-700 dark:text-slate-300">
@@ -736,7 +715,10 @@ export const WellnessPage = () => {
             <Calendar className="w-3 h-3 text-orange-500" />
             <span>{row?.booking_date || 'N/A'}</span>
           </div>
-          <div className="text-[10px] text-slate-400">{row?.start_time || 'Scheduled Slot'}{row?.end_time ? ` - ${row.end_time}` : ''}</div>
+          <div className="text-[10px] text-slate-400 flex items-center space-x-1 mt-0.5">
+             <Clock className="w-3 h-3" />
+             <span>{row?.start_time || 'N/A'}</span>
+          </div>
         </div>
       ),
     },
@@ -759,11 +741,24 @@ export const WellnessPage = () => {
           <button
             onClick={() => {
               setStatusBookItem(row);
-              setTargetStatus(row?.status === 'CONFIRMED' ? 'COMPLETED' : 'CONFIRMED');
+              setTargetStatus('COMPLETED');
             }}
-            className="px-2.5 py-1 text-xs font-bold rounded-lg text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/50 hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-colors"
+            disabled={row?.status === 'COMPLETED' || row?.status === 'CANCELLED'}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Mark Completed"
           >
-            Change Status
+            <CheckCircle2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              setStatusBookItem(row);
+              setTargetStatus('CANCELLED');
+            }}
+            disabled={row?.status === 'COMPLETED' || row?.status === 'CANCELLED'}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Cancel Booking"
+          >
+            <XCircle className="w-4 h-4" />
           </button>
         </div>
       ),
@@ -933,31 +928,7 @@ export const WellnessPage = () => {
               </select>
             </div>
 
-            <button
-              onClick={() => {
-                setProvForm({
-                  name: '',
-                  city: '',
-                  state: 'Uttarakhand',
-                  country: 'India',
-                  address: '',
-                  pincode: '',
-                  phone: '',
-                  cover_image_url: '',
-                  short_description: '',
-                  description: '',
-                  rating: 4.5,
-                  is_featured: false,
-                  is_active: true,
-                  is_published: true,
-                });
-                setIsCreateProvOpen(true);
-              }}
-              className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-md flex items-center space-x-1.5 ml-auto"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Register Center</span>
-            </button>
+            
           </div>
 
           {provError ? (
@@ -1030,28 +1001,7 @@ export const WellnessPage = () => {
               </select>
             </div>
 
-            <button
-              onClick={() => {
-                setServForm({
-                  provider_id: providerOptions[0]?.id || '',
-                  category_id: categoryOptions[0]?.id || '',
-                  name: '',
-                  slug: '',
-                  short_description: '',
-                  description: '',
-                  price: '',
-                  duration_minutes: 60,
-                  is_featured: false,
-                  is_active: true,
-                  is_published: true,
-                });
-                setIsCreateServOpen(true);
-              }}
-              className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-md flex items-center space-x-1.5 ml-auto"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Service</span>
-            </button>
+            
           </div>
 
           {servError ? (
@@ -1086,7 +1036,7 @@ export const WellnessPage = () => {
               <select
                 value={bookStatus}
                 onChange={(e) => setBookStatus(e.target.value)}
-                className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+                className="w-full sm:w-40 px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
               >
                 <option value="">All Statuses</option>
                 <option value="CONFIRMED">CONFIRMED</option>
@@ -1350,107 +1300,6 @@ export const WellnessPage = () => {
         </form>
       </Modal>
 
-      {/* 3. Register Provider Modal */}
-      <Modal
-        isOpen={isCreateProvOpen}
-        onClose={() => setIsCreateProvOpen(false)}
-        title="Register Wellness Center"
-        subtitle="Add a new nationwide certified wellness & healing center."
-      >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const { rating, is_published, is_featured, ...creationPayload } = provForm;
-            createProviderMutation.mutate(creationPayload);
-          }}
-          className="space-y-4"
-        >
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Center Name</label>
-            <input
-              type="text"
-              required
-              value={provForm.name}
-              onChange={(e) => setProvForm({ ...provForm, name: e.target.value })}
-              placeholder="e.g. Parmarth Niketan Yoga & Wellness Center"
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">City</label>
-              <input
-                type="text"
-                required
-                value={provForm.city}
-                onChange={(e) => setProvForm({ ...provForm, city: e.target.value })}
-                placeholder="Rishikesh"
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">State</label>
-              <select
-                value={provForm.state}
-                onChange={(e) => setProvForm({ ...provForm, state: e.target.value })}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-              >
-                {INDIAN_STATES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Address & Phone</label>
-            <div className="grid grid-cols-2 gap-4">
-              <input
-                type="text"
-                value={provForm.address}
-                onChange={(e) => setProvForm({ ...provForm, address: e.target.value })}
-                placeholder="Swargashram, Tapovan"
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-              />
-              <input
-                type="text"
-                value={provForm.phone}
-                onChange={(e) => setProvForm({ ...provForm, phone: e.target.value })}
-                placeholder="+91 9876543210"
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-              />
-            </div>
-          </div>
-
-          <ImagePreviewUpload
-            value={provForm.cover_image_url}
-            onChange={(url) => setProvForm({ ...provForm, cover_image_url: url })}
-            label="Cover Image URL"
-          />
-
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => setIsCreateProvOpen(false)}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={createProviderMutation.isPending}
-              className="px-4 py-2 text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 rounded-xl shadow-md flex items-center space-x-2"
-            >
-              {createProviderMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>Save Center</span>
-            </button>
-          </div>
-        </form>
-      </Modal>
-
       {/* 4. Edit Provider & Curation Flags Modal */}
       <Modal
         isOpen={isEditProvOpen}
@@ -1632,131 +1481,6 @@ export const WellnessPage = () => {
         ) : (
           <p className="text-xs text-slate-400">Center not found.</p>
         )}
-      </Modal>
-
-      {/* 6. Create Service Modal */}
-      <Modal
-        isOpen={isCreateServOpen}
-        onClose={() => setIsCreateServOpen(false)}
-        title="Add Treatment Service"
-        subtitle="Register new wellness service under provider."
-      >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const { is_published, is_featured, ...creationPayload } = servForm;
-              createServiceMutation.mutate({
-                ...creationPayload,
-              price: Number(servForm.price) || 0,
-              duration_minutes: Number(servForm.duration_minutes) || 60,
-            });
-          }}
-          className="space-y-4"
-        >
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Wellness Provider / Center</label>
-            <select
-              required
-              value={servForm.provider_id}
-              onChange={(e) => setServForm({ ...servForm, provider_id: e.target.value })}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-            >
-              {providerOptions.filter(Boolean).map((p, idx) => (
-                <option key={p?.id || idx} value={p?.id || ''}>
-                  {p?.name || 'Center'} {p?.city ? `(${p.city})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Category</label>
-            <select
-              value={servForm.category_id}
-              onChange={(e) => setServForm({ ...servForm, category_id: e.target.value })} required
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-            >
-              <option value="">Select Category...</option>
-              {categoryOptions.filter(Boolean).map((c, idx) => (
-                <option key={c?.id || idx} value={c?.id || ''}>
-                  {c?.name || 'Category'}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Service Title</label>
-            <input
-              type="text"
-              required
-              value={servForm.name}
-              onChange={(e) =>
-                setServForm({
-                  ...servForm,
-                  name: e.target.value,
-                  slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-                })
-              }
-              placeholder="e.g. Abhyanga Full Body Herbal Oil Massage"
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Price (₹)</label>
-              <input
-                type="number"
-                required
-                value={servForm.price}
-                onChange={(e) => setServForm({ ...servForm, price: e.target.value })}
-                placeholder="2500"
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Duration (Minutes)</label>
-              <input
-                type="number"
-                required
-                value={servForm.duration_minutes}
-                onChange={(e) => setServForm({ ...servForm, duration_minutes: e.target.value })}
-                placeholder="60"
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Short Summary</label>
-            <input
-              type="text"
-              value={servForm.short_description}
-              onChange={(e) => setServForm({ ...servForm, short_description: e.target.value })}
-              placeholder="Traditional Ayurvedic full body oil massage for deep relaxation."
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
-            />
-          </div>
-
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => setIsCreateServOpen(false)}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={createServiceMutation.isPending}
-              className="px-4 py-2 text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 rounded-xl shadow-md flex items-center space-x-2"
-            >
-              {createServiceMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>Save Service</span>
-            </button>
-          </div>
-        </form>
       </Modal>
 
       {/* 7. Edit Service & Curation Flags Modal */}
