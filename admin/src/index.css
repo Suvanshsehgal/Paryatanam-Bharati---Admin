@@ -24,21 +24,45 @@
   }
 }
 
-/* Soft Custom Scrollbars */
+/* 
+ * Enhanced Custom Scrollbars for UX
+ * Provides a clean, modern Mac-like scrollbar experience
+ */
+.custom-scrollbar::-webkit-scrollbar,
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
+.custom-scrollbar::-webkit-scrollbar-track,
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
+.custom-scrollbar::-webkit-scrollbar-thumb,
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
+  background: rgba(148, 163, 184, 0.4);
   border-radius: 9999px;
+  transition: background-color 0.3s ease;
 }
 
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.5);
+  background: rgba(148, 163, 184, 0.7);
+}
+
+/* Dark mode scrollbar adjustments */
+.dark .custom-scrollbar::-webkit-scrollbar-thumb,
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(71, 85, 105, 0.6);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.9);
+}
+
+/* Better active scaling for buttons globally */
+button:not(:disabled) {
+  @apply active:scale-[0.98] transition-transform duration-150;
 }

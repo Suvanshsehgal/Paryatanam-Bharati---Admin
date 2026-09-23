@@ -395,7 +395,7 @@ export const MarketplacePage = () => {
                           </button>
                           <button
                             onClick={() => handleOpenModerate(product, 'APPROVED')}
-                            className="px-4 py-1.5 text-xs font-bold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm flex items-center space-x-1.5"
+                            className="px-5 py-2 text-xs font-extrabold uppercase tracking-wide rounded-xl text-white bg-emerald-600 hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-500/50 ring-offset-2 dark:ring-offset-slate-900 flex items-center space-x-1.5"
                           >
                             <CheckCircle2 className="w-4 h-4" />
                             <span>Approve Product</span>
@@ -479,8 +479,10 @@ export const MarketplacePage = () => {
             <button
               onClick={handleConfirmModerate}
               disabled={moderateMutation.isPending}
-              className={`px-4 py-2 text-xs font-bold text-white rounded-xl shadow-md flex items-center space-x-2 ${
-                moderateAction === 'APPROVED' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'
+              className={`px-5 py-2.5 text-xs font-extrabold uppercase tracking-wide text-white rounded-xl flex items-center space-x-2 transition-all ${
+                moderateAction === 'APPROVED' 
+                  ? 'bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-500/50 ring-offset-2 dark:ring-offset-slate-900' 
+                  : 'bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-500/30 ring-2 ring-rose-500/50 ring-offset-2 dark:ring-offset-slate-900'
               }`}
             >
               {moderateMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}

@@ -32,13 +32,13 @@ export const DataTable = ({
   const endRecord = Math.min(page * limit, total_records);
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-      <div className="overflow-x-auto min-h-[300px]">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col animate-in fade-in duration-300">
+      <div className="overflow-x-auto min-h-[300px] max-h-[70vh] custom-scrollbar">
+        <table className="w-full text-left border-collapse relative">
+          <thead className="sticky top-0 z-20 backdrop-blur-xl bg-slate-50/90 dark:bg-slate-950/90 shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <tr>
               {columns.map((col, idx) => (
-                <th key={col.key || col.accessorKey || idx} className={cn('px-6 py-3.5', col.className)}>
+                <th key={col.key || col.accessorKey || idx} className={cn('px-6 py-3.5 whitespace-nowrap', col.className)}>
                   {col.header}
                 </th>
               ))}

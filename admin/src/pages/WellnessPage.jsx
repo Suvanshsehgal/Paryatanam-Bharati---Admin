@@ -523,10 +523,11 @@ export const WellnessPage = () => {
           ) : (
             <button
               onClick={() => row?.id && publishProviderMutation.mutate(row.id)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30 transition-all border border-emerald-300 dark:border-emerald-800/60 shadow-sm flex items-center space-x-1 ring-1 ring-emerald-500/20 hover:ring-emerald-500/50"
               title="Publish Center"
             >
-              <CheckCircle2 className="w-4 h-4" />
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Publish</span>
             </button>
           )}
           <button
@@ -649,10 +650,11 @@ export const WellnessPage = () => {
           ) : (
             <button
               onClick={() => row?.id && publishServiceMutation.mutate(row.id)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30 transition-all border border-emerald-300 dark:border-emerald-800/60 shadow-sm flex items-center space-x-1 ring-1 ring-emerald-500/20 hover:ring-emerald-500/50"
               title="Publish Service"
             >
-              <CheckCircle2 className="w-4 h-4" />
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Publish</span>
             </button>
           )}
           <button
@@ -744,10 +746,11 @@ export const WellnessPage = () => {
               setTargetStatus('COMPLETED');
             }}
             disabled={row?.status === 'COMPLETED' || row?.status === 'CANCELLED'}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30 transition-all border border-emerald-300 dark:border-emerald-800/60 shadow-sm flex items-center space-x-1 ring-1 ring-emerald-500/20 hover:ring-emerald-500/50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:ring-0"
             title="Mark Completed"
           >
-            <CheckCircle2 className="w-4 h-4" />
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Complete</span>
           </button>
           <button
             onClick={() => {

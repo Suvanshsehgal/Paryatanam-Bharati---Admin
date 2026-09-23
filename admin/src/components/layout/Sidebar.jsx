@@ -83,7 +83,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
         </div>
 
         {/* Navigation List */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
@@ -95,17 +95,17 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
                 onClick={() => setIsMobileOpen(false)}
                 className={({ isActive: linkActive }) =>
                   cn(
-                    'flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group',
+                    'flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 group relative overflow-hidden',
                     (isActive || linkActive)
-                      ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 font-bold'
+                      ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 font-bold shadow-sm'
                       : 'text-zinc-600 dark:text-slate-400 hover:bg-zinc-100/70 dark:hover:bg-slate-800/50 hover:text-zinc-900 dark:hover:text-slate-100'
                   )
                 }
               >
-                <Icon className={cn('w-4.5 h-4.5 flex-shrink-0', isActive ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 dark:text-slate-500')} />
+                <Icon className={cn('w-4.5 h-4.5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110', isActive ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-400 dark:text-slate-500')} />
 
                 {(!isCollapsed || isMobileOpen) && (
-                  <span className="truncate tracking-tight">{item.name}</span>
+                  <span className="truncate tracking-tight relative z-10">{item.name}</span>
                 )}
               </NavLink>
             );

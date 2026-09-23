@@ -10,7 +10,7 @@ export const AppShell = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-zinc-50/60 dark:bg-slate-950 text-zinc-900 dark:text-zinc-100 flex transition-colors duration-200">
+    <div className="min-h-screen bg-zinc-50/60 dark:bg-slate-950 text-zinc-900 dark:text-zinc-100 flex transition-colors duration-300">
       {/* Sidebar */}
       <Sidebar
         isCollapsed={isCollapsed}
@@ -28,7 +28,7 @@ export const AppShell = () => {
       >
         <Topbar setIsMobileOpen={setIsMobileOpen} />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both">
           <Outlet />
         </main>
       </div>
