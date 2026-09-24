@@ -334,7 +334,7 @@ export const MarketplacePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {(pendingProducts || []).filter(Boolean).map((product, idx) => {
                 const isCertified = product?.certification_status === 'CERTIFIED';
-                const isActionable = ['PENDING_APPROVAL', 'PENDING_REVIEW', 'UPDATE_PENDING_APPROVAL'].includes(product?.status);
+                const isActionable = product?.status !== 'APPROVED' && product?.status !== 'REJECTED';
 
                 return (
                   <div
@@ -401,12 +401,7 @@ export const MarketplacePage = () => {
                             <span>Approve Product</span>
                           </button>
                         </>
-                      ) : (
-                        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1">
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>Approved & Synchronized</span>
-                        </span>
-                      )}
+                      ) : product?.status === 'REJECTED' ? ( <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-center space-x-1"> <XCircle className="w-4 h-4" /> <span>Rejected</span> </span> ) : ( <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1"> <CheckCircle2 className="w-4 h-4" /> <span>Approved & Synchronized</span> </span> )}
                     </div>
                   </div>
                 );
@@ -582,3 +577,5 @@ export const MarketplacePage = () => {
     </div>
   );
 };
+
+
