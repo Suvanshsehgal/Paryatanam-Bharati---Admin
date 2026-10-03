@@ -182,13 +182,13 @@ export const PrasadPage = () => {
     {
       header: 'Status',
       accessorKey: 'is_published',
-      cell: (row) => <StatusBadge status={row.is_published ? 'APPROVED' : 'DRAFT'} />,
+      cell: (row) => <StatusBadge status={row.status === 'PUBLISHED' || row.is_published ? 'APPROVED' : 'DRAFT'} />,
     },
     {
       header: 'Actions',
       cell: (row) => (
         <div className="flex items-center space-x-2">
-          {!row.is_published && (
+          {!(row.status === 'PUBLISHED' || row.is_published) && (
             <button
               onClick={() => publishOfferingMutation.mutate(row.id)}
               disabled={publishOfferingMutation.isPending}
@@ -336,8 +336,8 @@ export const PrasadPage = () => {
                         {temple.region || 'SACRED SHRINE'}
                       </span>
                       <div className="flex items-center space-x-2">
-                        <StatusBadge status={temple.is_published ? 'APPROVED' : 'DRAFT'} />
-                        {!temple.is_published && (
+                        <StatusBadge status={temple.status === 'PUBLISHED' || temple.is_published ? 'APPROVED' : 'DRAFT'} />
+                        {!(temple.status === 'PUBLISHED' || temple.is_published) && (
                           <button
                             onClick={() => publishTempleMutation.mutate(temple.id)}
                             disabled={publishTempleMutation.isPending}
@@ -702,5 +702,6 @@ export const PrasadPage = () => {
     </div>
   );
 };
+
 
 
