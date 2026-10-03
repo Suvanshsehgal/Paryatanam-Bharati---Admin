@@ -19,15 +19,24 @@ import {
   Trash2,
   Loader2,
   Layers,
-  Sparkles
+  Sparkles,
+  FileText,
+  Truck,
+  Eye,
 } from 'lucide-react';
 
 export const MarketplacePage = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('moderation'); // 'moderation' | 'categories'
+  const [activeTab, setActiveTab] = useState('moderation'); // 'moderation' | 'categories' | 'orders'
   const [moderationFilter, setModerationFilter] = useState('PENDING_QUEUE'); // 'PENDING_QUEUE' | 'APPROVED' | 'REJECTED' | 'all'
+
+  // Order Management State
+  const [orderFilter, setOrderFilter] = useState('all'); // 'all' | 'PENDING_PAYMENT' | 'CONFIRMED' | 'PROCESSING' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED'
+  const [statusModalOrder, setStatusModalOrder] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState('CONFIRMED');
+  const [invoiceModalOrder, setInvoiceModalOrder] = useState(null);
 
   // Moderation state
   const [moderateProduct, setModerateProduct] = useState(null); // product object
@@ -57,6 +66,23 @@ export const MarketplacePage = () => {
     queryKey: ['categories'],
     queryFn: () => marketplaceApi.getCategories(),
   });
+
+  const { data: platformOrders, isLoading: loadingOrders } = useQuery({
+    queryKey: ['platformOrders', orderFilter],
+    queryFn: () => marketplaceApi.getOrders(orderFilter !== 'all' ? { status: orderFilter } : {}),
+  });
+
+  // Order Status Update Mutation
+  const orderStatusMutation = useMutation({
+    mutationFn: ({ orderId, status }) => marketplaceApi.updateOrderStatus(orderId, status),
+    onSuccess: (res) => {
+      toast.success('Order Status Updated', res.message || 'Status updated successfully.');
+      queryClient.invalidateQueries({ queryKey: ['platformOrders'] });
+      setStatusModalOrder(null);
+    },
+    onError: (err) => toast.error('Status Update Failed', err.detail || err.message),
+  });
+
 
   // Moderation Mutation
   const moderateMutation = useMutation({
@@ -237,6 +263,94 @@ export const MarketplacePage = () => {
     },
   ];
 
+  // Order Table Columns
+  const orderColumns = [
+    {
+      header: 'Order Reference',
+      accessorKey: 'order_reference',
+      cell: (order) => (
+        <div>
+          <h4 className="font-bold text-slate-900 dark:text-slate-100">#{order.order_reference || order.id.substring(0, 8)}</h4>
+          <p className="text-[10px] text-slate-500 font-mono mt-0.5">{new Date(order.created_at).toLocaleString()}</p>
+        </div>
+      ),
+    },
+    {
+      header: 'Customer',
+      accessorKey: 'user',
+      cell: (order) => (
+        <div>
+          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{order.delivery_recipient_name || order.user?.name || 'Customer'}</p>
+          <p className="text-[10px] text-slate-500">{order.delivery_phone || order.user?.phone || 'N/A'}</p>
+        </div>
+      ),
+    },
+    {
+      header: 'Vendor',
+      accessorKey: 'vendor',
+      cell: (order) => <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{order.vendor?.name || 'GoAmrit Vendor'}</span>,
+    },
+    {
+      header: 'Total Amount',
+      accessorKey: 'total_amount',
+      cell: (order) => <span className="text-xs font-bold text-slate-900 dark:text-white">{formatCurrency(order.total_amount || 0)}</span>,
+    },
+    {
+      header: 'Payment Status',
+      accessorKey: 'payment_status',
+      cell: (order) => (
+        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border ${
+          order.payment_status === 'PAID'
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+            : order.payment_status === 'FAILED'
+            ? 'bg-rose-50 text-rose-700 border-rose-300'
+            : 'bg-amber-50 text-amber-700 border-amber-300'
+        }`}>
+          {order.payment_status || 'PENDING'}
+        </span>
+      ),
+    },
+    {
+      header: 'Order Status',
+      accessorKey: 'status',
+      cell: (order) => <StatusBadge status={order.status} />,
+    },
+    {
+      header: 'Actions',
+      key: 'actions',
+      cell: (order) => (
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => {
+              setStatusModalOrder(order);
+              setSelectedStatus(order.status);
+            }}
+            className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 flex items-center space-x-1"
+            title="Update Status"
+          >
+            <Truck className="w-3.5 h-3.5 text-orange-500" />
+            <span>Update Status</span>
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const inv = await marketplaceApi.getOrderDetail(order.id);
+                setInvoiceModalOrder(inv);
+              } catch (e) {
+                toast.error('Invoice Error', 'Failed to fetch order details');
+              }
+            }}
+            className="p-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            title="View Tax Invoice"
+          >
+            <FileText className="w-3.5 h-3.5 text-slate-600" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+
   return (
     <div className="space-y-6">
       {/* Page Header & Navigation Tabs */}
@@ -272,6 +386,17 @@ export const MarketplacePage = () => {
           >
             Shop Categories
           </button>
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              activeTab === 'orders'
+                ? 'bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+            }`}
+          >
+            Platform Orders ({platformOrders?.length || 0})
+          </button>
+
         </div>
       </div>
 
@@ -439,6 +564,36 @@ export const MarketplacePage = () => {
         </div>
       )}
 
+      {/* TAB 3: Platform Orders Manager */}
+      {activeTab === 'orders' && (
+        <div className="space-y-4">
+          {/* Order Status Filter Bar */}
+          <div className="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
+            {['all', 'PENDING_PAYMENT', 'CONFIRMED', 'PROCESSING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'].map((st) => (
+              <button
+                key={st}
+                onClick={() => setOrderFilter(st)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap ${
+                  orderFilter === st
+                    ? 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                {st === 'all' ? 'All Orders' : st.replaceAll('_', ' ')}
+              </button>
+            ))}
+          </div>
+
+          <DataTable
+            columns={orderColumns}
+            data={platformOrders || []}
+            isLoading={loadingOrders}
+            emptyTitle="No platform orders"
+            emptyDescription="No marketplace orders found matching the selected status filter."
+          />
+        </div>
+      )}
+
       {/* Approve/Reject Modal */}
       <Modal
         isOpen={Boolean(moderateProduct)}
@@ -568,6 +723,126 @@ export const MarketplacePage = () => {
         </form>
       </Modal>
 
+      {/* Update Order Status Modal */}
+      <Modal
+        isOpen={Boolean(statusModalOrder)}
+        onClose={() => setStatusModalOrder(null)}
+        title="Update Platform Order Status"
+        subtitle={`Order Ref: #${statusModalOrder?.order_reference || statusModalOrder?.id?.substring(0, 8)}`}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Target Status
+            </label>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="PENDING_PAYMENT">PENDING PAYMENT</option>
+              <option value="CONFIRMED">CONFIRMED</option>
+              <option value="PROCESSING">PROCESSING</option>
+              <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY</option>
+              <option value="DELIVERED">DELIVERED</option>
+              <option value="COMPLETED">COMPLETED</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
+          </div>
+
+          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button
+              onClick={() => setStatusModalOrder(null)}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                if (statusModalOrder) {
+                  orderStatusMutation.mutate({ orderId: statusModalOrder.id, status: selectedStatus });
+                }
+              }}
+              disabled={orderStatusMutation.isPending}
+              className="px-5 py-2.5 text-xs font-extrabold uppercase tracking-wide text-white bg-orange-600 hover:bg-orange-500 rounded-xl flex items-center space-x-2 transition-all shadow-lg shadow-orange-500/30"
+            >
+              {orderStatusMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              <span>Update Status</span>
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Admin Invoice Preview Modal */}
+      <Modal
+        isOpen={Boolean(invoiceModalOrder)}
+        onClose={() => setInvoiceModalOrder(null)}
+        title="Marketplace Tax Invoice"
+        subtitle={`Invoice for Order #${invoiceModalOrder?.order_reference || invoiceModalOrder?.id?.substring(0, 8)}`}
+      >
+        {invoiceModalOrder && (
+          <div className="space-y-4 text-slate-800 dark:text-slate-200">
+            <div className="flex justify-between items-start border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div>
+                <h3 className="text-base font-black text-orange-600">Paryatanam Bharati</h3>
+                <p className="text-xs text-slate-500">GoAmrit Marketplace Platform</p>
+              </div>
+              <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${
+                invoiceModalOrder.payment_status === 'PAID'
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-amber-100 text-amber-800'
+              }`}>
+                {invoiceModalOrder.payment_status || 'PENDING'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <p className="font-bold text-slate-500">Customer Details:</p>
+                <p className="font-semibold">{invoiceModalOrder.delivery_recipient_name || invoiceModalOrder.user?.name || 'Customer'}</p>
+                <p>{invoiceModalOrder.delivery_phone || invoiceModalOrder.user?.phone}</p>
+                <p>{[invoiceModalOrder.delivery_address_line1, invoiceModalOrder.delivery_city, invoiceModalOrder.delivery_state, invoiceModalOrder.delivery_pincode].filter(Boolean).join(', ')}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-slate-500">Vendor / Fulfillment:</p>
+                <p className="font-semibold">{invoiceModalOrder.vendor?.name || 'GoAmrit Vendor'}</p>
+                <p>Method: {invoiceModalOrder.fulfillment_method || 'DELIVERY'}</p>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
+              <h4 className="text-xs font-bold text-slate-500 mb-2">Purchased Items:</h4>
+              <div className="space-y-2 text-xs">
+                {(invoiceModalOrder.items || []).map((item, i) => (
+                  <div key={i} className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-900">
+                    <span>{item.product_name || 'Product'} (x{item.quantity})</span>
+                    <span className="font-mono font-bold">{formatCurrency(item.line_total || item.unit_price * item.quantity)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-3 space-y-1 text-xs text-right">
+              <p>Subtotal: <span className="font-mono font-bold">{formatCurrency(invoiceModalOrder.subtotal || 0)}</span></p>
+              <p>Shipping Charge: <span className="font-mono font-bold">{formatCurrency(invoiceModalOrder.shipping_charge || 0)}</span></p>
+              <p>GST Tax: <span className="font-mono font-bold">{formatCurrency(invoiceModalOrder.tax || 0)}</span></p>
+              <p className="text-sm font-black text-slate-900 dark:text-white pt-1">
+                Grand Total: <span className="font-mono text-orange-600">{formatCurrency(invoiceModalOrder.total_amount || 0)}</span>
+              </p>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button
+                onClick={() => setInvoiceModalOrder(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                Close Invoice
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
       {/* Delete Category Confirmation */}
       <ConfirmationModal
         isOpen={Boolean(deletingCatId)}
@@ -578,7 +853,7 @@ export const MarketplacePage = () => {
         confirmText="Delete Category"
         isDanger={true}
         isLoading={deleteCatMutation.isPending}
-      />
     </div>
   );
 };
+
