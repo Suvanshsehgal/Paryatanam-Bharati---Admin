@@ -1,25 +1,42 @@
 import { create } from 'zustand';
+import { queryClient } from '../lib/queryClient';
 
 const TOKEN_KEY = 'paryatanam_admin_token';
 const REFRESH_TOKEN_KEY = 'paryatanam_admin_refresh_token';
 const USER_KEY = 'paryatanam_admin_user';
 
-export const checkIsAdmin = (user) => {
-  if (!user || !user.roles) return false;
-  const roles = user.roles;
-  if (!Array.isArray(roles)) return false;
+export const ROLE_ADMIN = 'ADMIN';
+export const ROLE_SUPER_ADMIN = 'SUPER_ADMIN';
 
-  return roles.some((r) => {
-    if (typeof r === 'string') {
-      const u = r.toUpperCase();
-      return u === 'ADMIN' || u === 'OWNER';
-    }
-    if (typeof r === 'object' && r !== null) {
-      const roleStr = String(r.role || r.name || r.value || '').toUpperCase();
-      return roleStr === 'ADMIN' || roleStr === 'OWNER';
-    }
-    return false;
-  });
+/** Normalised upper-case role names from the various shapes the API has used. */
+export const getUserRoles = (user) => {
+  if (!user || !Array.isArray(user.roles)) return [];
+  return user.roles
+    .map((r) => {
+      if (typeof r === 'string') return r.toUpperCase();
+      if (r && typeof r === 'object') return String(r.role || r.name || r.value || '').toUpperCase();
+      return '';
+    })
+    .filter(Boolean);
+};
+
+export const hasRole = (user, role) => getUserRoles(user).includes(role);
+
+/**
+ * The web portal serves only Admins and the Super Admin. Owners, vendors and
+ * operators use the mobile app (and nearly every admin API requires ADMIN).
+ */
+export const checkIsAdmin = (user) =>
+  hasRole(user, ROLE_ADMIN) || hasRole(user, ROLE_SUPER_ADMIN);
+
+const deriveRoleFlags = (user) => {
+  const isSuperAdmin = hasRole(user, ROLE_SUPER_ADMIN);
+  return {
+    isAdmin: checkIsAdmin(user),
+    isSuperAdmin,
+    // Super Admin is a read-only oversight role unless the account is also an Admin.
+    isReadOnly: isSuperAdmin && !hasRole(user, ROLE_ADMIN),
+  };
 };
 
 const getInitialState = () => {
@@ -31,18 +48,16 @@ const getInitialState = () => {
     if (storedUser) {
       user = JSON.parse(storedUser);
     }
-  } catch (e) {
-    console.error('Failed to parse user from localStorage', e);
+  } catch {
+    localStorage.removeItem(USER_KEY);
   }
-
-  const isAdmin = checkIsAdmin(user);
 
   return {
     token,
     refreshToken,
     user,
     isAuthenticated: Boolean(token && user),
-    isAdmin,
+    ...deriveRoleFlags(user),
     isLoading: false,
   };
 };
@@ -51,18 +66,20 @@ export const useAuthStore = create((set) => ({
   ...getInitialState(),
 
   login: (user, token, refreshToken = null) => {
+    queryClient.clear();
     localStorage.setItem(TOKEN_KEY, token);
     if (refreshToken) {
       localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    } else {
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
     }
     localStorage.setItem(USER_KEY, JSON.stringify(user));
-    const isAdmin = checkIsAdmin(user);
     set({
       token,
       refreshToken,
       user,
       isAuthenticated: true,
-      isAdmin,
+      ...deriveRoleFlags(user),
     });
   },
 
@@ -81,21 +98,21 @@ export const useAuthStore = create((set) => ({
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    queryClient.clear();
     set({
       token: null,
       refreshToken: null,
       user: null,
       isAuthenticated: false,
-      isAdmin: false,
+      ...deriveRoleFlags(null),
     });
   },
 
   updateUser: (updatedUser) => {
     localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
-    const isAdmin = checkIsAdmin(updatedUser);
     set({
       user: updatedUser,
-      isAdmin,
+      ...deriveRoleFlags(updatedUser),
     });
   },
 }));

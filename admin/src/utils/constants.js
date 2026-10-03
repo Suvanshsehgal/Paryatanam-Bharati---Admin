@@ -9,7 +9,32 @@ export const INDIAN_STATES = [
   'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
 ];
 
-export const USER_ROLES = ['USER', 'ADMIN', 'OWNER'];
+// Roles an Admin can assign. SUPER_ADMIN is provisioned out-of-band and is
+// deliberately not assignable from the portal (the API rejects it).
+export const USER_ROLES = [
+  'USER',
+  'ADMIN',
+  'OWNER',
+  'VENDOR',
+  'OPERATOR',
+  'COORDINATOR',
+  'SERVICE_PROVIDER',
+  'PRACTITIONER',
+];
+
+export const ISSUE_SEVERITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+export const ISSUE_STATUSES = ['OPEN', 'ACKNOWLEDGED', 'RESOLVED'];
+
+export const ACTIVITY_MODULES = [
+  { label: 'Users & Roles', value: 'profiles' },
+  { label: 'SDUI Home', value: 'home' },
+  { label: 'Marketplace', value: 'marketplace' },
+  { label: 'Travel', value: 'travel' },
+  { label: 'Prasad', value: 'prasad' },
+  { label: 'Wellness', value: 'wellness' },
+  { label: 'Issue Reports', value: 'issue-reports' },
+  { label: 'Super Admin', value: 'oversight' },
+];
 
 export const HOME_SECTION_TYPES = [
   { label: 'Hero Carousel', value: 'HERO_CAROUSEL' },

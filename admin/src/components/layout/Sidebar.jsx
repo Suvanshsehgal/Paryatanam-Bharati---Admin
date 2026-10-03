@@ -11,9 +11,12 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Compass
+  Compass,
+  Activity,
+  Flag,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const NAV_ITEMS = [
   { name: 'Dashboard Overview', path: '/dashboard', icon: LayoutDashboard },
@@ -25,8 +28,19 @@ const NAV_ITEMS = [
   { name: 'Wellness Academy', path: '/dashboard/wellness', icon: GraduationCap },
 ];
 
+const SUPER_ADMIN_NAV_ITEMS = [
+  { name: 'Admin Activity Monitor', path: '/dashboard/activity', icon: Activity },
+  { name: 'Issues Reported', path: '/dashboard/reports', icon: Flag },
+];
+
+const ADMIN_NAV_ITEMS = [{ name: 'Super Admin Reports', path: '/dashboard/reports', icon: Flag }];
+
 export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen }) => {
   const location = useLocation();
+  const { isReadOnly } = useAuthStore();
+  const navItems = isReadOnly
+    ? [NAV_ITEMS[0], ...SUPER_ADMIN_NAV_ITEMS, ...NAV_ITEMS.slice(1)]
+    : [...NAV_ITEMS, ...ADMIN_NAV_ITEMS];
 
   return (
     <>
@@ -58,7 +72,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
                   Paryatanam
                 </span>
                 <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  Admin Console
+                  {isReadOnly ? 'Super Admin Console' : 'Admin Console'}
                 </span>
               </div>
             )}
@@ -84,7 +98,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
 
         {/* Navigation List */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
 

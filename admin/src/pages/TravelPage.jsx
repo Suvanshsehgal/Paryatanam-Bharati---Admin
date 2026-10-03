@@ -321,8 +321,7 @@ export const TravelPage = () => {
                 const coverImg =
                   tour.primary_image_url ||
                   tour.cover_image ||
-                  (tour.media && tour.media[0] ? tour.media[0].file_path : null) ||
-                  'https://images.unsplash.com/photo-1561361513-2d000a50f0dc';
+                  (tour.media && tour.media[0] ? tour.media[0].file_path : null);
 
                 const priceVal = tour.base_price ?? tour.price ?? 0;
                 const operatorName = tour.operator?.name || tour.operator_name || 'Registered Operator';
@@ -336,11 +335,19 @@ export const TravelPage = () => {
                     className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between"
                   >
                     <div className="flex items-start space-x-4">
-                      <img
-                        src={coverImg}
-                        alt={tour.title}
-                        className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
-                      />
+                      {coverImg ? (
+                        <img
+                          src={coverImg}
+                          alt={tour.title}
+                          className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        // Show that the tour has no cover image instead of a stock photo,
+                        // so moderation decisions reflect the operator's real content.
+                        <div className="w-24 h-24 rounded-xl flex-shrink-0 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-400 text-center px-1">
+                          No cover image
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between">
                           <StatusBadge status={getStatusBadgeVariant(statusStr)} />

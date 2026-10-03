@@ -48,25 +48,15 @@ export const usersApi = {
   },
 
   updateUserRoles: async (userId, roles) => {
-    try {
-      const response = await apiClient.put(`/admin/profiles/${userId}/roles`, { roles });
-      return response.data;
-    } catch (err) {
-      // Fallback if role endpoint differs on backend
-      const response = await apiClient.put(`/auth/admin/users/${userId}/roles`, { roles });
-      return response.data;
-    }
+    const response = await apiClient.put(`/admin/profiles/${userId}/roles`, { roles });
+    return response.data?.data || response.data;
   },
 
   updateUserStatus: async (userId, status) => {
-    try {
-      const response = await apiClient.patch(`/admin/profiles/${userId}/status`, { status });
-      return response.data;
-    } catch (err) {
-      // Fallback if status endpoint differs on backend
-      const response = await apiClient.patch(`/auth/admin/users/${userId}/status`, { status });
-      return response.data;
-    }
+    const response = await apiClient.patch(`/admin/profiles/${userId}/status`, {
+      status: String(status).toLowerCase(),
+    });
+    return response.data?.data || response.data;
   },
 };
 

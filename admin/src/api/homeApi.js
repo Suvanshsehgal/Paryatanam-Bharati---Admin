@@ -97,6 +97,23 @@ export const homeApi = {
     return response.data;
   },
 
+  // Publish / unpublish a section (only published + visible sections reach the app)
+  publishSection: async (sectionId) => {
+    const response = await apiClient.post(`/admin/home/sections/${sectionId}/publish`);
+    return response.data;
+  },
+
+  unpublishSection: async (sectionId) => {
+    const response = await apiClient.post(`/admin/home/sections/${sectionId}/unpublish`);
+    return response.data;
+  },
+
+  // Update a card item (e.g. publish a draft card)
+  updateSectionItem: async (sectionId, itemId, itemData) => {
+    const response = await apiClient.patch(`/admin/home/sections/${sectionId}/items/${itemId}`, itemData);
+    return response.data;
+  },
+
   // Add section card item (for card grid sections)
   addSectionItem: async (sectionId, itemData) => {
     const response = await apiClient.post(`/admin/home/sections/${sectionId}/items`, itemData);

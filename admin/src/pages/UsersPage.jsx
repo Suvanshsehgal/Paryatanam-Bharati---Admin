@@ -2,17 +2,20 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '../api/usersApi';
 import { useToast } from '../context/ToastContext';
+import { useAuthStore } from '../store/useAuthStore';
 import { DataTable } from '../components/common/DataTable';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Modal } from '../components/common/Modal';
 import { ConfirmationModal } from '../components/common/ConfirmationModal';
 import { USER_ROLES } from '../utils/constants';
 import { formatDate } from '../utils/formatters';
-import { Search, Shield, UserCheck, UserX, Loader2, Check } from 'lucide-react';
+import { Search, Shield, UserCheck, UserX, Loader2 } from 'lucide-react';
+import { ErrorState } from '../components/common/ErrorState';
 
 export const UsersPage = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user: currentUser, isReadOnly, updateUser } = useAuthStore();
 
   // State
   const [page, setPage] = useState(1);
@@ -34,8 +37,12 @@ export const UsersPage = () => {
   // Role Assignment Mutation
   const roleMutation = useMutation({
     mutationFn: ({ userId, roles }) => usersApi.updateUserRoles(userId, roles),
-    onSuccess: (res, variables) => {
+    onSuccess: (updated, variables) => {
       toast.success('Roles Updated', `Assigned roles [${variables.roles.join(', ')}] successfully.`);
+      // Editing your own roles takes effect in this session immediately.
+      if (currentUser && variables.userId === currentUser.id && Array.isArray(updated?.roles)) {
+        updateUser({ ...currentUser, roles: updated.roles });
+      }
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setRoleModalUser(null);
     },
@@ -62,7 +69,12 @@ export const UsersPage = () => {
     setSelectedRoles([...(user.roles || [])]);
   };
 
+  const isSelf = (user) => Boolean(currentUser && user && user.id === currentUser.id);
+  const isProtected = (user) => (user?.roles || []).map((r) => String(r).toUpperCase()).includes('SUPER_ADMIN');
+
   const handleToggleRoleCheckbox = (role) => {
+    // An Admin cannot remove their own ADMIN role (the API refuses it too).
+    if (role === 'ADMIN' && isSelf(roleModalUser)) return;
     setSelectedRoles((prev) =>
       prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
     );
@@ -70,6 +82,10 @@ export const UsersPage = () => {
 
   const handleSaveRoles = () => {
     if (!roleModalUser) return;
+    if (selectedRoles.length === 0) {
+      toast.error('No Role Selected', 'Select at least one role for this account.');
+      return;
+    }
     roleMutation.mutate({ userId: roleModalUser.id, roles: selectedRoles });
   };
 
@@ -122,6 +138,12 @@ export const UsersPage = () => {
       key: 'actions',
       cell: (user) => {
         const isActive = user.status?.toUpperCase() === 'ACTIVE';
+        if (isProtected(user)) {
+          return <span className="text-[11px] font-semibold text-fuchsia-600 dark:text-fuchsia-400">Protected account</span>;
+        }
+        if (isReadOnly) {
+          return <span className="text-[11px] text-slate-400">View only</span>;
+        }
         return (
           <div className="flex items-center space-x-2">
             <button
@@ -135,7 +157,8 @@ export const UsersPage = () => {
 
             <button
               onClick={() => setStatusModalUser(user)}
-              className={`p-1.5 rounded-lg border transition-colors flex items-center space-x-1 text-xs font-semibold ${
+              disabled={isSelf(user)}
+              className={`p-1.5 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center space-x-1 text-xs font-semibold ${
                 isActive
                   ? 'border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-950 dark:hover:bg-rose-950/50'
                   : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-950 dark:hover:bg-emerald-950/50'
@@ -213,6 +236,9 @@ export const UsersPage = () => {
       </div>
 
       {/* Main Table */}
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : (
       <DataTable
         columns={columns}
         data={data?.data || []}
@@ -226,6 +252,7 @@ export const UsersPage = () => {
         emptyTitle="No platform users found"
         emptyDescription="No registered user profiles matched your active role or search filters."
       />
+      )}
 
       {/* Role Assignment Modal */}
       <Modal

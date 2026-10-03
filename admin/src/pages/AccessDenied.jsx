@@ -22,7 +22,7 @@ export const AccessDenied = () => {
         <div className="space-y-2">
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">403 — Access Denied</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Your logged-in account (<strong className="text-slate-700 dark:text-slate-300">{user?.email || 'Current User'}</strong>) does not have the required <code className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 font-mono">ADMIN</code> role to view the Paryatanam Management Portal.
+            Your logged-in account (<strong className="text-slate-700 dark:text-slate-300">{user?.email || 'Current User'}</strong>) does not have the <code className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 font-mono">ADMIN</code> or <code className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 font-mono">SUPER_ADMIN</code> role required for the Paryatanam Management Portal. Owners and users should use the mobile app.
           </p>
         </div>
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuthStore, checkIsAdmin } from '../store/useAuthStore';
+import { useAuthStore, checkIsAdmin, hasRole } from '../store/useAuthStore';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { authApi } from '../api/authApi';
@@ -88,10 +88,14 @@ export const Login = () => {
       const hasAdminPrivileges = checkIsAdmin(user);
 
       if (!hasAdminPrivileges) {
-        toast.error('Access Denied', `Account '${user.email || values.email}' does not possess ADMIN privileges.`);
+        toast.error(
+          'Access Denied',
+          `Account '${user.email || values.email}' is not an Admin or Super Admin account. Owners and users should use the mobile app.`
+        );
         navigate('/access-denied', { replace: true });
       } else {
-        toast.success('Welcome Back', `Logged in successfully as ${user.name || user.email || 'Admin'}`);
+        const roleLabel = hasRole(user, 'SUPER_ADMIN') && !hasRole(user, 'ADMIN') ? 'Super Admin' : 'Admin';
+        toast.success('Welcome Back', `Signed in as ${user.name || user.email} (${roleLabel})`);
         navigate('/dashboard', { replace: true });
       }
     } catch (err) {

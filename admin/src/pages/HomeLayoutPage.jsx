@@ -6,6 +6,7 @@ import { marketplaceApi } from '../api/marketplaceApi';
 import { prasadApi } from '../api/prasadApi';
 import { wellnessApi } from '../api/wellnessApi';
 import { useToast } from '../context/ToastContext';
+import { useAuthStore } from '../store/useAuthStore';
 import { HOME_SECTION_TYPES, ACTION_TYPES, FLUTTER_SCREEN_DESTINATIONS } from '../utils/constants';
 import { Modal } from '../components/common/Modal';
 import { ImagePreviewUpload } from '../components/common/ImagePreviewUpload';
@@ -35,10 +36,28 @@ import {
   Sparkles,
   Link as LinkIcon,
   Trash2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
+// The app only receives sections (and cards) that are BOTH published and visible.
+const sectionStatus = (entity) => {
+  if (!entity.is_published) return 'DRAFT';
+  if (!entity.is_visible) return 'HIDDEN';
+  return 'LIVE';
+};
+
 // Sortable Item Component for Section Drag & Drop
-const SortableSectionItem = ({ section, onAddSlide, onAddItem, onDeleteSection, onDeleteSlide }) => {
+const SortableSectionItem = ({
+  section,
+  onAddSlide,
+  onAddItem,
+  onDeleteSection,
+  onDeleteSlide,
+  onTogglePublish,
+  onPublishItem,
+  readOnly,
+}) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
   });
@@ -84,10 +103,25 @@ const SortableSectionItem = ({ section, onAddSlide, onAddItem, onDeleteSection, 
         <div className="flex items-center justify-between sm:justify-end space-x-3 border-t sm:border-t-0 border-zinc-100 dark:border-slate-800 pt-2 sm:pt-0">
           <div className="flex items-center space-x-2 text-xs">
             <span className="text-zinc-400">Order: #{section.display_order}</span>
-            <StatusBadge status={section.is_visible ? 'PUBLISHED' : 'DRAFT'} />
+            <StatusBadge status={sectionStatus(section)} />
           </div>
 
-          {isHero ? (
+          {!readOnly && onTogglePublish && (
+            <button
+              onClick={() => onTogglePublish(section)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-xl flex items-center space-x-1 border transition-colors ${
+                section.is_published
+                  ? 'border-zinc-200 dark:border-slate-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-slate-800'
+                  : 'border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100'
+              }`}
+              title={section.is_published ? 'Remove this section from the app' : 'Show this section in the app'}
+            >
+              {section.is_published ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              <span>{section.is_published ? 'Unpublish' : 'Publish'}</span>
+            </button>
+          )}
+
+          {readOnly ? null : isHero ? (
             <button
               onClick={() => onAddSlide(section)}
               className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-orange-50 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 hover:bg-orange-100 transition-colors flex items-center space-x-1 border border-orange-200 dark:border-orange-800/60"
@@ -105,7 +139,7 @@ const SortableSectionItem = ({ section, onAddSlide, onAddItem, onDeleteSection, 
             </button>
           )}
 
-          {onDeleteSection && (
+          {!readOnly && onDeleteSection && (
             <button
               onClick={() => onDeleteSection(section)}
               className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-xl transition-colors"
@@ -147,7 +181,7 @@ const SortableSectionItem = ({ section, onAddSlide, onAddItem, onDeleteSection, 
                     {slide.action_target}
                   </span>
                 </div>
-                {onDeleteSlide && (
+                {!readOnly && onDeleteSlide && (
                   <button
                     onClick={() => onDeleteSlide(section.id, slide.id)}
                     className="opacity-0 group-hover:opacity-100 p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-lg transition-all"
@@ -181,6 +215,19 @@ const SortableSectionItem = ({ section, onAddSlide, onAddItem, onDeleteSection, 
                   <h5 className="font-semibold text-zinc-800 dark:text-zinc-200 truncate">{item.title}</h5>
                   <p className="text-[11px] text-zinc-500 truncate">{item.subtitle}</p>
                 </div>
+                {sectionStatus(item) !== 'LIVE' && (
+                  <div className="flex flex-col items-end space-y-1">
+                    <StatusBadge status={sectionStatus(item)} className="text-[9px] py-0 px-1.5" />
+                    {!readOnly && onPublishItem && (
+                      <button
+                        onClick={() => onPublishItem(section.id, item)}
+                        className="text-[10px] font-semibold text-emerald-600 hover:underline"
+                      >
+                        Publish
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -193,6 +240,7 @@ const SortableSectionItem = ({ section, onAddSlide, onAddItem, onDeleteSection, 
 export const HomeLayoutPage = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { isReadOnly } = useAuthStore();
 
   // Modals state
   const [isCreateSectionOpen, setIsCreateSectionOpen] = useState(false);
@@ -310,6 +358,29 @@ export const HomeLayoutPage = () => {
     onError: (err) => toast.error('Delete Section Failed', err.detail || err.message),
   });
 
+  const togglePublishMutation = useMutation({
+    mutationFn: (section) =>
+      section.is_published ? homeApi.unpublishSection(section.id) : homeApi.publishSection(section.id),
+    onSuccess: (_res, section) => {
+      toast.success(
+        section.is_published ? 'Section Unpublished' : 'Section Published',
+        section.is_published ? 'Removed from the app home screen.' : 'Now live on the app home screen.'
+      );
+      queryClient.invalidateQueries({ queryKey: ['homeSections'] });
+    },
+    onError: (err) => toast.error('Publish Update Failed', err.detail || err.message),
+  });
+
+  const publishItemMutation = useMutation({
+    mutationFn: ({ sectionId, item }) =>
+      homeApi.updateSectionItem(sectionId, item.id, { is_published: true, is_visible: true }),
+    onSuccess: () => {
+      toast.success('Card Published', 'The card is now live in its section.');
+      queryClient.invalidateQueries({ queryKey: ['homeSections'] });
+    },
+    onError: (err) => toast.error('Publish Card Failed', err.detail || err.message),
+  });
+
   const deleteSlideMutation = useMutation({
     mutationFn: ({ sectionId, itemId }) => homeApi.deleteCarouselSlide(sectionId, itemId),
     onSuccess: () => {
@@ -321,7 +392,7 @@ export const HomeLayoutPage = () => {
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
-    if (!over || active.id === over.id || !sections) return;
+    if (isReadOnly || !over || active.id === over.id || !sections) return;
 
     const oldIndex = sections.findIndex((s) => s.id === active.id);
     const newIndex = sections.findIndex((s) => s.id === over.id);
@@ -429,6 +500,7 @@ export const HomeLayoutPage = () => {
           </p>
         </div>
 
+        {!isReadOnly && (
         <button
           onClick={() => {
             setNewSection((prev) => ({ ...prev, display_order: (sections?.length || 0) + 1 }));
@@ -439,6 +511,7 @@ export const HomeLayoutPage = () => {
           <Plus className="w-4 h-4" />
           <span>Create Home Section</span>
         </button>
+        )}
       </div>
 
       {/* Drag & Drop Section List */}
@@ -487,6 +560,9 @@ export const HomeLayoutPage = () => {
                     setActiveAddItemSection(sec);
                   }}
                   onDeleteSection={(sec) => deleteSectionMutation.mutate(sec.id)}
+                  onTogglePublish={(sec) => togglePublishMutation.mutate(sec)}
+                  onPublishItem={(sectionId, item) => publishItemMutation.mutate({ sectionId, item })}
+                  readOnly={isReadOnly}
                   onDeleteSlide={(sectionId, slideId) =>
                     deleteSlideMutation.mutate({ sectionId, itemId: slideId })
                   }

@@ -11,6 +11,18 @@ export const apiClient = axios.create({
   timeout: 15000,
 });
 
+const READ_ONLY_METHODS = ['get', 'head', 'options'];
+
+/** Pulls the human-readable message out of the backend error envelope
+ *  ({"error": {"message", "details"}}) or older flat shapes. */
+export const extractErrorMessage = (data, fallback) => {
+  const envelope = data?.error;
+  if (envelope && typeof envelope === 'object' && envelope.message) return envelope.message;
+  if (typeof data?.detail === 'string') return data.detail;
+  if (typeof data?.message === 'string') return data.message;
+  return fallback;
+};
+
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -28,6 +40,25 @@ const processQueue = (error, token = null) => {
 // Request Interceptor: Auto-attach Authorization Header
 apiClient.interceptors.request.use(
   (config) => {
+    // The Super Admin is a read-only oversight role: block write requests to
+    // admin APIs up front (the backend enforces the same rule) so the UI shows
+    // a clear explanation instead of a generic failure.
+    const method = (config.method || 'get').toLowerCase();
+    const url = config.url || '';
+    if (
+      useAuthStore.getState().isReadOnly &&
+      !READ_ONLY_METHODS.includes(method) &&
+      !url.startsWith('/super-admin') &&
+      !url.startsWith('/auth/')
+    ) {
+      return Promise.reject({
+        message: 'Super Admin access is read-only. Use "Report Issue" to ask an Admin to make this change.',
+        detail: 'Super Admin access is read-only. Use "Report Issue" to ask an Admin to make this change.',
+        error_code: 'ERR_READ_ONLY',
+        status: 403,
+      });
+    }
+
     const token = localStorage.getItem('paryatanam_admin_token');
     if (token) {
       const authHeader = `Bearer ${token}`;
@@ -47,13 +78,14 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (error?.error_code === 'ERR_READ_ONLY') return Promise.reject(error);
+
     const originalRequest = error.config;
     const status = error.response?.status;
-    const detail =
-      error.response?.data?.detail ||
-      error.response?.data?.message ||
-      error.message ||
-      'An unexpected API error occurred.';
+    const detail = extractErrorMessage(
+      error.response?.data,
+      error.message || 'An unexpected API error occurred.'
+    );
 
     if (status === 401 && originalRequest && !originalRequest._retry) {
       const refreshToken = localStorage.getItem('paryatanam_admin_refresh_token');
@@ -131,14 +163,13 @@ apiClient.interceptors.response.use(
       }
     }
 
-    if (status === 403) {
-      console.warn('Forbidden (403): User lacks ADMIN permissions for this resource.');
-    }
-
     const customError = {
       message: detail,
       detail: detail,
-      error_code: error.response?.data?.error_code || `ERR_HTTP_${status || 'NETWORK'}`,
+      error_code:
+        error.response?.data?.error?.code ||
+        error.response?.data?.error_code ||
+        `ERR_HTTP_${status || 'NETWORK'}`,
       timestamp: error.response?.data?.timestamp || new Date().toISOString(),
       status: status,
     };

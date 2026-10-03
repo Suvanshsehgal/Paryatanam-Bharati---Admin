@@ -1,11 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/useAuthStore';
+import { oversightApi } from '../../api/oversightApi';
 import { useTheme } from '../../context/ThemeContext';
 import { Search, Sun, Moon, LogOut, Menu, Bell, ChevronDown } from 'lucide-react';
 import { StatusBadge } from '../common/StatusBadge';
 
 export const Topbar = ({ setIsMobileOpen }) => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, isReadOnly } = useAuthStore();
+  const navigate = useNavigate();
+
+  // Admins: open issues raised by the Super Admin. Super Admin: reports the
+  // Admin team has answered but not yet resolved.
+  const { data: openReports } = useQuery({
+    queryKey: ['oversight', 'reports', 'badge', isReadOnly ? 'super' : 'admin'],
+    queryFn: () =>
+      isReadOnly
+        ? oversightApi.getSuperAdminReports({ page: 1, limit: 1, status: 'ACKNOWLEDGED' })
+        : oversightApi.getAdminReports({ page: 1, limit: 1, status: 'OPEN' }),
+    refetchInterval: 60 * 1000,
+    staleTime: 30 * 1000,
+  });
+  const pendingCount = openReports?.pagination?.total_records || 0;
   const { theme, toggleTheme } = useTheme();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -67,11 +84,20 @@ export const Topbar = ({ setIsMobileOpen }) => {
 
         {/* Notifications */}
         <button
+          onClick={() => navigate('/dashboard/reports')}
           className="p-2 rounded-xl text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-slate-800 transition-colors relative"
-          title="Notifications"
+          title={
+            pendingCount
+              ? `${pendingCount} report${pendingCount === 1 ? '' : 's'} need${pendingCount === 1 ? 's' : ''} attention`
+              : 'No pending reports'
+          }
         >
           <Bell className="w-4.5 h-4.5" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-orange-500" />
+          {pendingCount > 0 && (
+            <span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
+              {pendingCount > 9 ? '9+' : pendingCount}
+            </span>
+          )}
         </button>
 
         {/* User Profile Dropdown */}
@@ -86,6 +112,9 @@ export const Topbar = ({ setIsMobileOpen }) => {
             <div className="hidden md:flex flex-col text-left">
               <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-100 leading-tight">
                 {user?.name || 'Administrator'}
+              </span>
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-tight">
+                {isReadOnly ? 'Super Admin' : 'Admin'}
               </span>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
