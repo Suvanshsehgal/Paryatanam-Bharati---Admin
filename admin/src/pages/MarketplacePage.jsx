@@ -62,6 +62,13 @@ export const MarketplacePage = () => {
     queryFn: () => marketplaceApi.getPendingProducts(moderationFilter),
   });
 
+  const { data: moderateProductDetail } = useQuery({
+    queryKey: ['productDetail', moderateProduct?.id],
+    queryFn: () => marketplaceApi.getProductDetails(moderateProduct.id),
+    enabled: Boolean(moderateProduct?.id),
+  });
+  const pendingChangeRequest = moderateProductDetail?.pending_change_request;
+
   const { data: categories, isLoading: loadingCategories } = useQuery({
     queryKey: ['categories'],
     queryFn: () => marketplaceApi.getCategories(),
@@ -602,6 +609,36 @@ export const MarketplacePage = () => {
               ? 'Approving this item will immediately publish it to the GoAmrit Marketplace storefront.'
               : 'Please specify the audit reason for rejecting this vendor item.'}
           </p>
+
+          {pendingChangeRequest && (
+            <div className="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-3">
+              <p className="text-xs font-bold text-amber-800 dark:text-amber-300 mb-2">
+                {pendingChangeRequest.change_type === 'CREATE'
+                  ? 'New product submission — proposed details:'
+                  : 'Vendor edited this already-published product. Changed fields:'}
+              </p>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                {Object.entries(pendingChangeRequest.proposed_data || {})
+                  .filter(([key, value]) => {
+                    const currentValue = pendingChangeRequest.current_data?.[key];
+                    return pendingChangeRequest.change_type === 'CREATE' || JSON.stringify(currentValue) !== JSON.stringify(value);
+                  })
+                  .map(([key, value]) => (
+                    <div key={key} className="text-xs grid grid-cols-[minmax(0,110px)_1fr] gap-2">
+                      <span className="font-semibold text-amber-900 dark:text-amber-200 truncate">{key}</span>
+                      <span className="text-slate-700 dark:text-slate-300 truncate">
+                        {pendingChangeRequest.change_type !== 'CREATE' && pendingChangeRequest.current_data?.[key] !== undefined && (
+                          <span className="line-through text-slate-400 dark:text-slate-500 mr-1">
+                            {String(pendingChangeRequest.current_data[key])}
+                          </span>
+                        )}
+                        {String(value)}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
 
           {moderateAction === 'REJECTED' && (
             <div>

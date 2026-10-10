@@ -17,7 +17,13 @@ const READ_ONLY_METHODS = ['get', 'head', 'options'];
  *  ({"error": {"message", "details"}}) or older flat shapes. */
 export const extractErrorMessage = (data, fallback) => {
   const envelope = data?.error;
-  if (envelope && typeof envelope === 'object' && envelope.message) return envelope.message;
+  if (envelope && typeof envelope === 'object' && envelope.message) {
+    const reasons = envelope.details?.reasons;
+    if (Array.isArray(reasons) && reasons.length > 0) {
+      return `${envelope.message} ${reasons.join(' ')}`;
+    }
+    return envelope.message;
+  }
   if (typeof data?.detail === 'string') return data.detail;
   if (typeof data?.message === 'string') return data.message;
   return fallback;
