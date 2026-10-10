@@ -61,4 +61,23 @@ export const oversightApi = {
     });
     return response.data?.data;
   },
+
+  // ---- Super Admin Approvals (single accept/reject queue over every
+  // Admin-level approval workflow — temple requests, GoAmrit certification) ----
+  getApprovals: async ({ page = 1, limit = 20 } = {}) => {
+    const response = await apiClient.get('/super-admin/approvals', {
+      params: { page, limit },
+    });
+    return toPage(response.data?.data, page, limit);
+  },
+
+  decideApproval: async ({ type, id, decision, note }) => {
+    const response = await apiClient.post('/super-admin/approvals/decide', {
+      type,
+      id,
+      decision,
+      note: note || undefined,
+    });
+    return response.data?.data;
+  },
 };

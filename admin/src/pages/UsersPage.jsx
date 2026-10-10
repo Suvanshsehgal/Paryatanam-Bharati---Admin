@@ -69,12 +69,25 @@ export const UsersPage = () => {
     setSelectedRoles([...(user.roles || [])]);
   };
 
+  // `isReadOnly` means the signed-in account is a Super Admin (see Sidebar /
+  // useAuthStore) — Super Admin is the one deliberate exception to that
+  // read-only rule: it may assign any role, including SUPER_ADMIN itself,
+  // and manage existing Super Admin accounts. An Admin keeps the existing
+  // restriction (any role except SUPER_ADMIN; cannot touch Super Admins).
+  const isSuperAdminActor = isReadOnly;
+
   const isSelf = (user) => Boolean(currentUser && user && user.id === currentUser.id);
   const isProtected = (user) => (user?.roles || []).map((r) => String(r).toUpperCase()).includes('SUPER_ADMIN');
+  const assignableRoles = isSuperAdminActor ? [...USER_ROLES, 'SUPER_ADMIN'] : USER_ROLES;
 
   const handleToggleRoleCheckbox = (role) => {
-    // An Admin cannot remove their own ADMIN role (the API refuses it too).
-    if (role === 'ADMIN' && isSelf(roleModalUser)) return;
+    // Neither tier may strip the role that lets them reach this screen from
+    // their own account (the API refuses it too, this just avoids a round
+    // trip for the obvious case).
+    if (isSelf(roleModalUser)) {
+      if (!isSuperAdminActor && role === 'ADMIN') return;
+      if (isSuperAdminActor && role === 'SUPER_ADMIN') return;
+    }
     setSelectedRoles((prev) =>
       prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
     );
@@ -138,10 +151,14 @@ export const UsersPage = () => {
       key: 'actions',
       cell: (user) => {
         const isActive = user.status?.toUpperCase() === 'ACTIVE';
-        if (isProtected(user)) {
+        // Admin cannot touch a Super Admin account at all. Super Admin has
+        // no such block — it's the one tier that can manage them.
+        if (isProtected(user) && !isSuperAdminActor) {
           return <span className="text-[11px] font-semibold text-fuchsia-600 dark:text-fuchsia-400">Protected account</span>;
         }
-        if (isReadOnly) {
+        // Super Admin stays read-only for account status (suspend/activate)
+        // — only role assignment is the deliberate write exception.
+        if (isReadOnly && !isSuperAdminActor) {
           return <span className="text-[11px] text-slate-400">View only</span>;
         }
         return (
@@ -155,28 +172,32 @@ export const UsersPage = () => {
               <span>Roles</span>
             </button>
 
-            <button
-              onClick={() => setStatusModalUser(user)}
-              disabled={isSelf(user)}
-              className={`p-1.5 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center space-x-1 text-xs font-semibold ${
-                isActive
-                  ? 'border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-950 dark:hover:bg-rose-950/50'
-                  : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-950 dark:hover:bg-emerald-950/50'
-              }`}
-              title={isActive ? 'Suspend user' : 'Activate user'}
-            >
-              {isActive ? (
-                <>
-                  <UserX className="w-3.5 h-3.5" />
-                  <span>Suspend</span>
-                </>
-              ) : (
-                <>
-                  <UserCheck className="w-3.5 h-3.5" />
-                  <span>Activate</span>
-                </>
-              )}
-            </button>
+            {isSuperAdminActor ? (
+              <span className="text-[11px] text-slate-400">Status: view only</span>
+            ) : (
+              <button
+                onClick={() => setStatusModalUser(user)}
+                disabled={isSelf(user)}
+                className={`p-1.5 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center space-x-1 text-xs font-semibold ${
+                  isActive
+                    ? 'border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-950 dark:hover:bg-rose-950/50'
+                    : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-950 dark:hover:bg-emerald-950/50'
+                }`}
+                title={isActive ? 'Suspend user' : 'Activate user'}
+              >
+                {isActive ? (
+                  <>
+                    <UserX className="w-3.5 h-3.5" />
+                    <span>Suspend</span>
+                  </>
+                ) : (
+                  <>
+                    <UserCheck className="w-3.5 h-3.5" />
+                    <span>Activate</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         );
       },
@@ -267,7 +288,7 @@ export const UsersPage = () => {
           </p>
 
           <div className="space-y-2 border border-slate-200 dark:border-slate-800 rounded-xl p-3 bg-slate-50/50 dark:bg-slate-950/50">
-            {USER_ROLES.map((role) => {
+            {assignableRoles.map((role) => {
               const isChecked = selectedRoles.includes(role);
               return (
                 <label

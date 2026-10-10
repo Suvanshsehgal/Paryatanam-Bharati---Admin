@@ -14,6 +14,7 @@ import {
   Compass,
   Activity,
   Flag,
+  ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
 ];
 
 const SUPER_ADMIN_NAV_ITEMS = [
+  { name: 'Admin Approvals', path: '/dashboard/approvals', icon: ClipboardCheck },
   { name: 'Admin Activity Monitor', path: '/dashboard/activity', icon: Activity },
   { name: 'Issues Reported', path: '/dashboard/reports', icon: Flag },
 ];

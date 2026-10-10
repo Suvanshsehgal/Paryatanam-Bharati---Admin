@@ -42,14 +42,18 @@ apiClient.interceptors.request.use(
   (config) => {
     // The Super Admin is a read-only oversight role: block write requests to
     // admin APIs up front (the backend enforces the same rule) so the UI shows
-    // a clear explanation instead of a generic failure.
+    // a clear explanation instead of a generic failure. Role assignment
+    // (/admin/profiles/{id}/roles) is the one deliberate write exception —
+    // the backend's require_role_management_access allows it for both tiers.
     const method = (config.method || 'get').toLowerCase();
     const url = config.url || '';
+    const isRoleAssignmentRoute = /^\/admin\/profiles\/[^/]+\/roles$/.test(url);
     if (
       useAuthStore.getState().isReadOnly &&
       !READ_ONLY_METHODS.includes(method) &&
       !url.startsWith('/super-admin') &&
-      !url.startsWith('/auth/')
+      !url.startsWith('/auth/') &&
+      !isRoleAssignmentRoute
     ) {
       return Promise.reject({
         message: 'Super Admin access is read-only. Use "Report Issue" to ask an Admin to make this change.',

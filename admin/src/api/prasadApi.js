@@ -17,12 +17,11 @@ export const prasadApi = {
     return response.data;
   },
 
-  uploadTempleMedia: async (id, file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await apiClient.post(`/admin/prasad/temples/${id}/media`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+  // Registers a media reference by URL (the backend's /media endpoint takes
+  // a TempleMediaCreate JSON body — a file_path string — not a file upload;
+  // there is no multipart/file-storage handling on this route).
+  addTempleMedia: async (id, data) => {
+    const response = await apiClient.post(`/admin/prasad/temples/${id}/media`, data);
     return response.data;
   },
 

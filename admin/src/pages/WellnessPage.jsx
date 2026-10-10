@@ -931,7 +931,17 @@ export const WellnessPage = () => {
               </select>
             </div>
 
-            
+            <div className="w-36">
+              <select
+                value={provActive}
+                onChange={(e) => setProvActive(e.target.value)}
+                className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+              >
+                <option value="">Active: All</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
           </div>
 
           {provError ? (
@@ -1004,7 +1014,29 @@ export const WellnessPage = () => {
               </select>
             </div>
 
-            
+            <div className="w-36">
+              <select
+                value={servActive}
+                onChange={(e) => setServActive(e.target.value)}
+                className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+              >
+                <option value="">Active: All</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+
+            <div className="w-36">
+              <select
+                value={servFeatured}
+                onChange={(e) => setServFeatured(e.target.value)}
+                className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+              >
+                <option value="">Curated: All</option>
+                <option value="true">Featured</option>
+                <option value="false">Regular</option>
+              </select>
+            </div>
           </div>
 
           {servError ? (

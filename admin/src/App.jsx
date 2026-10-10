@@ -19,6 +19,7 @@ import { PrasadPage } from './pages/PrasadPage';
 import { WellnessPage } from './pages/WellnessPage';
 import { ActivityMonitorPage } from './pages/ActivityMonitorPage';
 import { IssueReportsPage } from './pages/IssueReportsPage';
+import { SuperAdminApprovalsPage } from './pages/SuperAdminApprovalsPage';
 
 export function App() {
   return (
@@ -52,6 +53,14 @@ export function App() {
                   element={
                     <ProtectedRoute roles={['SUPER_ADMIN']}>
                       <ActivityMonitorPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="approvals"
+                  element={
+                    <ProtectedRoute roles={['SUPER_ADMIN']}>
+                      <SuperAdminApprovalsPage />
                     </ProtectedRoute>
                   }
                 />
