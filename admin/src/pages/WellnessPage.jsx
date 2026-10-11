@@ -91,7 +91,10 @@ export const WellnessPage = () => {
     cover_image_url: '',
     short_description: '',
     description: '',
-    rating: 4.5,
+    latitude: '',
+    longitude: '',
+    open_time: '',
+    close_time: '',
     is_featured: false,
     is_active: true,
     is_published: true,
@@ -500,7 +503,10 @@ export const WellnessPage = () => {
                 cover_image_url: row?.cover_image_url || '',
                 short_description: row?.short_description || '',
                 description: row?.description || '',
-                rating: row?.rating ?? row?.average_rating ?? 4.5,
+                latitude: row?.latitude ?? '',
+                longitude: row?.longitude ?? '',
+                open_time: row?.open_time ? String(row.open_time).slice(0, 5) : '',
+                close_time: row?.close_time ? String(row.close_time).slice(0, 5) : '',
                 is_featured: row?.is_featured ?? false,
                 is_active: row?.is_active ?? true,
                 is_published: row?.is_published ?? true,
@@ -1346,13 +1352,22 @@ export const WellnessPage = () => {
           onSubmit={(e) => {
             e.preventDefault();
             if (!editingProv?.id) return;
-            updateProviderMutation.mutate({
-              id: editingProv.id,
-              data: {
-                ...provForm,
-                rating: Number(provForm.rating) || 4.5,
-              },
+            const data = { ...provForm };
+            // Publishing is a separate endpoint; rating is computed from reviews.
+            delete data.is_published;
+            delete data.rating;
+            // Cleared optional fields are sent as null so the backend clears them.
+            const required = ['name', 'city', 'state', 'country'];
+            Object.keys(data).forEach((key) => {
+              if (data[key] === '' && !required.includes(key)) data[key] = null;
             });
+            ['latitude', 'longitude'].forEach((key) => {
+              if (data[key] !== null) data[key] = Number(data[key]);
+            });
+            ['open_time', 'close_time'].forEach((key) => {
+              if (data[key] && data[key].length === 5) data[key] = `${data[key]}:00`;
+            });
+            updateProviderMutation.mutate({ id: editingProv.id, data });
           }}
           className="space-y-4"
         >
@@ -1379,15 +1394,106 @@ export const WellnessPage = () => {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Platform Rating Override</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">State</label>
+              <input
+                type="text"
+                required
+                value={provForm.state}
+                onChange={(e) => setProvForm({ ...provForm, state: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Short Summary</label>
+            <input
+              type="text"
+              maxLength={500}
+              value={provForm.short_description}
+              onChange={(e) => setProvForm({ ...provForm, short_description: e.target.value })}
+              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Description</label>
+            <textarea
+              rows={3}
+              value={provForm.description}
+              onChange={(e) => setProvForm({ ...provForm, description: e.target.value })}
+              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Address</label>
+              <input
+                type="text"
+                value={provForm.address}
+                onChange={(e) => setProvForm({ ...provForm, address: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Pincode</label>
+              <input
+                type="text"
+                value={provForm.pincode}
+                onChange={(e) => setProvForm({ ...provForm, pincode: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Phone</label>
+              <input
+                type="text"
+                value={provForm.phone}
+                onChange={(e) => setProvForm({ ...provForm, phone: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Opens (HH:MM)</label>
+              <input
+                type="time"
+                value={provForm.open_time}
+                onChange={(e) => setProvForm({ ...provForm, open_time: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Closes (HH:MM)</label>
+              <input
+                type="time"
+                value={provForm.close_time}
+                onChange={(e) => setProvForm({ ...provForm, close_time: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Latitude</label>
               <input
                 type="number"
-                step="0.1"
-                min="1"
-                max="5"
-                value={provForm.rating}
-                onChange={(e) => setProvForm({ ...provForm, rating: e.target.value })}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-amber-600"
+                step="any"
+                min="-90"
+                max="90"
+                value={provForm.latitude}
+                onChange={(e) => setProvForm({ ...provForm, latitude: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Longitude</label>
+              <input
+                type="number"
+                step="any"
+                min="-180"
+                max="180"
+                value={provForm.longitude}
+                onChange={(e) => setProvForm({ ...provForm, longitude: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
               />
             </div>
           </div>
@@ -1529,14 +1635,16 @@ export const WellnessPage = () => {
           onSubmit={(e) => {
             e.preventDefault();
             if (!editingServ?.id) return;
-            updateServiceMutation.mutate({
-              id: editingServ.id,
-              data: {
-                ...servForm,
-                price: Number(servForm.price) || 0,
-                duration_minutes: Number(servForm.duration_minutes) || 60,
-              },
+            const data = {
+              ...servForm,
+              price: Number(servForm.price) || 0,
+              duration_minutes: Number(servForm.duration_minutes) || 60,
+            };
+            // Blank IDs/slug are not valid values for the update schema — omit them.
+            ['provider_id', 'category_id', 'slug'].forEach((key) => {
+              if (!data[key]) delete data[key];
             });
+            updateServiceMutation.mutate({ id: editingServ.id, data });
           }}
           className="space-y-4"
         >

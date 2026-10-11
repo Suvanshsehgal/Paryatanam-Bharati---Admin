@@ -23,6 +23,25 @@ import {
   Calendar
 } from 'lucide-react';
 
+// Drops blank form fields (so the backend treats them as omitted, not invalid),
+// converts numeric strings, and appends seconds to HH:MM time inputs.
+const cleanPayload = (form, { numeric = [], times = [] } = {}) => {
+  const out = {};
+  for (const [key, value] of Object.entries(form)) {
+    if (value === '' || value === null || value === undefined) continue;
+    if (numeric.includes(key)) {
+      const n = Number(value);
+      if (Number.isNaN(n)) continue;
+      out[key] = n;
+    } else if (times.includes(key)) {
+      out[key] = value.length === 5 ? `${value}:00` : value;
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+};
+
 export const PrasadPage = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -59,9 +78,13 @@ export const PrasadPage = () => {
   const [offeringForm, setOfferingForm] = useState({
     name: '',
     short_description: '',
+    description: '',
     price: '',
     items_count: '',
+    serving_start_time: '',
+    serving_end_time: '',
     daily_capacity: '',
+    display_order: '',
     image_url: '',
     is_featured: false,
     is_active: true,
@@ -139,20 +162,24 @@ export const PrasadPage = () => {
 
   const handleSaveTemple = (e) => {
     e.preventDefault();
-    const payload = { ...templeForm };
-    if (!payload.open_time) delete payload.open_time;
-    else if (payload.open_time.length === 5) payload.open_time += ':00';
-
-    if (!payload.close_time) delete payload.close_time;
-    else if (payload.close_time.length === 5) payload.close_time += ':00';
-    
-    createTempleMutation.mutate(payload);
+    createTempleMutation.mutate(
+      cleanPayload(templeForm, {
+        numeric: ['latitude', 'longitude'],
+        times: ['open_time', 'close_time'],
+      })
+    );
   };
 
   const handleSaveOffering = (e) => {
     e.preventDefault();
     if (!activeOfferingTemple) return;
-    addOfferingMutation.mutate({ templeId: activeOfferingTemple.id, data: offeringForm });
+    addOfferingMutation.mutate({
+      templeId: activeOfferingTemple.id,
+      data: cleanPayload(offeringForm, {
+        numeric: ['price', 'items_count', 'daily_capacity', 'display_order'],
+        times: ['serving_start_time', 'serving_end_time'],
+      }),
+    });
   };
 
   // Offering columns
@@ -609,8 +636,8 @@ export const PrasadPage = () => {
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Price (₹)</label>
               <input
-                type="number" value={offeringForm.price}
-                onChange={(e) => setOfferingForm({ ...offeringForm, price: parseFloat(e.target.value) })}
+                type="number" min="0" step="0.01" value={offeringForm.price}
+                onChange={(e) => setOfferingForm({ ...offeringForm, price: e.target.value })}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
               />
             </div>
@@ -619,7 +646,7 @@ export const PrasadPage = () => {
               <input
                 type="number"
                 value={offeringForm.items_count}
-                onChange={(e) => setOfferingForm({ ...offeringForm, items_count: parseInt(e.target.value) })}
+                onChange={(e) => setOfferingForm({ ...offeringForm, items_count: e.target.value })}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
               />
             </div>
@@ -628,7 +655,43 @@ export const PrasadPage = () => {
               <input
                 type="number"
                 value={offeringForm.daily_capacity}
-                onChange={(e) => setOfferingForm({ ...offeringForm, daily_capacity: parseInt(e.target.value) })}
+                onChange={(e) => setOfferingForm({ ...offeringForm, daily_capacity: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Description</label>
+            <textarea
+              rows={3} value={offeringForm.description}
+              onChange={(e) => setOfferingForm({ ...offeringForm, description: e.target.value })}
+              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Serving From</label>
+              <input
+                type="time" value={offeringForm.serving_start_time}
+                onChange={(e) => setOfferingForm({ ...offeringForm, serving_start_time: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Serving Until</label>
+              <input
+                type="time" value={offeringForm.serving_end_time}
+                onChange={(e) => setOfferingForm({ ...offeringForm, serving_end_time: e.target.value })}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Display Order</label>
+              <input
+                type="number" min="0" value={offeringForm.display_order}
+                onChange={(e) => setOfferingForm({ ...offeringForm, display_order: e.target.value })}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
               />
             </div>
