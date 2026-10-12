@@ -33,6 +33,144 @@ import {
   Check
 } from 'lucide-react';
 
+const WEEKDAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+const PractitionerScheduleModal = ({ practitioner, onClose }) => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const practitionerId = practitioner?.id;
+  const [weekday, setWeekday] = useState(0);
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('17:00');
+  const [formError, setFormError] = useState('');
+
+  const { data: schedules = [], isLoading } = useQuery({
+    queryKey: ['practitionerSchedules', practitionerId],
+    queryFn: () => wellnessApi.getPractitionerSchedules(practitionerId),
+    enabled: Boolean(practitionerId),
+  });
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['practitionerSchedules', practitionerId] });
+
+  const addMutation = useMutation({
+    mutationFn: () =>
+      wellnessApi.addPractitionerSchedule(practitionerId, {
+        weekday: Number(weekday),
+        start_time: `${startTime}:00`,
+        end_time: `${endTime}:00`,
+        is_active: true,
+      }),
+    onSuccess: () => {
+      toast.success('Availability added', `${WEEKDAY_NAMES[weekday]} ${startTime} to ${endTime} is now bookable.`);
+      invalidate();
+    },
+    onError: (err) => toast.error('Could not add window', err.detail || err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (scheduleId) => wellnessApi.deletePractitionerSchedule(practitionerId, scheduleId),
+    onSuccess: () => {
+      toast.success('Availability removed', 'The window is no longer bookable.');
+      invalidate();
+    },
+    onError: (err) => toast.error('Could not remove window', err.detail || err.message),
+  });
+
+  const handleAdd = (e) => {
+    e.preventDefault();
+    if (endTime <= startTime) {
+      setFormError('End time must be after the start time.');
+      return;
+    }
+    setFormError('');
+    addMutation.mutate();
+  };
+
+  return (
+    <Modal
+      isOpen={Boolean(practitioner)}
+      onClose={onClose}
+      title="Weekly Availability"
+      subtitle={practitioner?.full_name || practitioner?.name || ''}
+    >
+      <div className="space-y-4">
+        <p className="text-xs text-slate-500">
+          Customers can only book the slots generated from these windows. Existing bookings are never double-booked.
+        </p>
+
+        {isLoading ? (
+          <p className="text-xs text-slate-400">Loading windows...</p>
+        ) : schedules.length === 0 ? (
+          <p className="text-xs text-amber-700 dark:text-amber-400">
+            No availability yet. This therapist cannot be booked until you add a window.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {schedules.map((s) => (
+              <li key={s.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-950 text-xs">
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {WEEKDAY_NAMES[s.weekday] || `Day ${s.weekday}`} · {String(s.start_time).slice(0, 5)} to {String(s.end_time).slice(0, 5)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => deleteMutation.mutate(s.id)}
+                  disabled={deleteMutation.isPending}
+                  className="text-rose-600 hover:underline"
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <form onSubmit={handleAdd} className="grid grid-cols-3 gap-3 items-end pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Day</label>
+            <select
+              value={weekday}
+              onChange={(e) => setWeekday(Number(e.target.value))}
+              className="w-full px-2 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+            >
+              {WEEKDAY_NAMES.map((name, idx) => (
+                <option key={name} value={idx}>{name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">From</label>
+            <input
+              type="time"
+              required
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="w-full px-2 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Until</label>
+            <input
+              type="time"
+              required
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              className="w-full px-2 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+            />
+          </div>
+          {formError && <p className="col-span-3 text-xs text-rose-600">{formError}</p>}
+          <button
+            type="submit"
+            disabled={addMutation.isPending}
+            className="col-span-3 px-4 py-2 text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 rounded-xl"
+          >
+            {addMutation.isPending ? 'Adding...' : 'Add availability window'}
+          </button>
+        </form>
+      </div>
+    </Modal>
+  );
+};
+
 export const WellnessPage = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -50,6 +188,7 @@ export const WellnessPage = () => {
   const [editingCat, setEditingCat] = useState(null);
   const [deletingCat, setDeletingCat] = useState(null);
 
+  const [schedulePract, setSchedulePract] = useState(null);
   const [catForm, setCatForm] = useState({
     name: '',
     slug: '',
@@ -1609,7 +1748,18 @@ export const WellnessPage = () => {
                   {(Array.isArray(provDetail?.practitioners) ? provDetail.practitioners : []).map((p, idx) => (
                     <li key={p?.id || idx} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-950 flex justify-between">
                       <span>{p?.full_name || p?.name || 'Practitioner'}</span>
-                      <span className="text-slate-400">{p?.specialization || 'Healer'}</span>
+                      <span className="flex items-center gap-3">
+                        <span className="text-slate-400">{p?.specialization || 'Healer'}</span>
+                        {p?.id && (
+                          <button
+                            type="button"
+                            onClick={() => setSchedulePract(p)}
+                            className="font-semibold text-orange-600 hover:underline"
+                          >
+                            Availability
+                          </button>
+                        )}
+                      </span>
                     </li>
                   ))}
                   {(!provDetail?.practitioners || provDetail.practitioners.length === 0) && (
@@ -1617,6 +1767,7 @@ export const WellnessPage = () => {
                   )}
                 </ul>
               </div>
+              <PractitionerScheduleModal practitioner={schedulePract} onClose={() => setSchedulePract(null)} />
             </div>
           </div>
         ) : (

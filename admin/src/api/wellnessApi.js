@@ -225,6 +225,21 @@ export const wellnessApi = {
   // ---------------------------------------------------------------------------
   // 4. Platform-Wide Bookings Supervision (/admin/wellness/bookings)
   // ---------------------------------------------------------------------------
+  getPractitionerSchedules: async (practitionerId) => {
+    const response = await apiClient.get(`/admin/wellness/practitioners/${practitionerId}/schedules`);
+    return response.data?.data || [];
+  },
+
+  addPractitionerSchedule: async (practitionerId, data) => {
+    const response = await apiClient.post(`/admin/wellness/practitioners/${practitionerId}/schedules`, data);
+    return response.data;
+  },
+
+  deletePractitionerSchedule: async (practitionerId, scheduleId) => {
+    const response = await apiClient.delete(`/admin/wellness/practitioners/${practitionerId}/schedules/${scheduleId}`);
+    return response.data;
+  },
+
   getAdminBookings: async (options = {}) => {
     try {
       const opts = options || {};
