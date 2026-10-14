@@ -1339,6 +1339,7 @@ export const WellnessPage = () => {
           </div>
 
           <ImagePreviewUpload
+            folder="wellness"
             value={catForm.image_url}
             onChange={(url) => setCatForm({ ...catForm, image_url: url })}
             label="Category Icon / Asset URL"
@@ -1442,6 +1443,7 @@ export const WellnessPage = () => {
           </div>
 
           <ImagePreviewUpload
+            folder="wellness"
             value={catForm.image_url}
             onChange={(url) => setCatForm({ ...catForm, image_url: url })}
             label="Category Icon / Asset URL"
@@ -1660,6 +1662,7 @@ export const WellnessPage = () => {
           </div>
 
           <ImagePreviewUpload
+            folder="wellness"
             value={provForm.cover_image_url}
             onChange={(url) => setProvForm({ ...provForm, cover_image_url: url })}
             label="Cover Image URL"

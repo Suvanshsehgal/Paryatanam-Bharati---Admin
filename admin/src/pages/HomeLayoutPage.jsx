@@ -841,6 +841,7 @@ export const HomeLayoutPage = () => {
           </div>
 
           <ImagePreviewUpload
+            folder="home"
             value={navigationForm.image_url}
             onChange={(url) => setNavigationForm({ ...navigationForm, image_url: url })}
             label="Image URL"

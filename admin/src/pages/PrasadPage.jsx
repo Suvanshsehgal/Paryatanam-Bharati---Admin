@@ -698,6 +698,7 @@ export const PrasadPage = () => {
           </div>
 
           <ImagePreviewUpload
+            folder="prasad"
             value={offeringForm.image_url}
             onChange={(url) => setOfferingForm({ ...offeringForm, image_url: url })}
             label="Prasadam Photo URL"
@@ -739,6 +740,7 @@ export const PrasadPage = () => {
           });
         }} className="space-y-4">
           <ImagePreviewUpload
+            folder="prasad"
             value={mediaUrl}
             onChange={setMediaUrl}
             label="Temple Photo URL"

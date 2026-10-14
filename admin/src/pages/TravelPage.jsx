@@ -482,6 +482,7 @@ export const TravelPage = () => {
           </div>
 
           <ImagePreviewUpload
+            folder="travel"
             value={destForm.primary_image_url}
             onChange={(url) => setDestForm({ ...destForm, primary_image_url: url })}
             label="Primary Destination Cover Photo"

@@ -773,6 +773,7 @@ export const MarketplacePage = () => {
           </div>
 
           <ImagePreviewUpload
+            folder="marketplace"
             value={catForm.image_url}
             onChange={(url) => setCatForm({ ...catForm, image_url: url })}
             label="Category Cover Image"
