@@ -146,4 +146,11 @@ export const marketplaceApi = {
     const response = await apiClient.patch(`/admin/marketplace/orders/${orderId}/status`, { status });
     return response.data;
   },
+
+  updateOrderPaymentStatus: async (orderId, paymentStatus) => {
+    const response = await apiClient.patch(`/admin/marketplace/orders/${orderId}/payment-status`, {
+      payment_status: paymentStatus,
+    });
+    return response.data;
+  },
 };

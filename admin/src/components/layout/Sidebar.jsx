@@ -1,4 +1,5 @@
 import React from 'react';
+import { Truck } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { name: 'Destinations & Tours', path: '/dashboard/travel', icon: MapPin },
   { name: 'Temple Prasad', path: '/dashboard/prasad', icon: Sparkles },
   { name: 'Wellness Academy', path: '/dashboard/wellness', icon: GraduationCap },
+  { name: 'Order Tracking', path: '/dashboard/order-tracking', icon: Truck },
 ];
 
 const SUPER_ADMIN_NAV_ITEMS = [

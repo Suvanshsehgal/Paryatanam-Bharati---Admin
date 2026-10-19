@@ -17,6 +17,7 @@ import { MarketplacePage } from './pages/MarketplacePage';
 import { TravelPage } from './pages/TravelPage';
 import { PrasadPage } from './pages/PrasadPage';
 import { WellnessPage } from './pages/WellnessPage';
+import { OrderTrackingPage } from './pages/OrderTrackingPage';
 import { ActivityMonitorPage } from './pages/ActivityMonitorPage';
 import { IssueReportsPage } from './pages/IssueReportsPage';
 import { SuperAdminApprovalsPage } from './pages/SuperAdminApprovalsPage';
@@ -48,6 +49,7 @@ export function App() {
                 <Route path="travel" element={<TravelPage />} />
                 <Route path="prasad" element={<PrasadPage />} />
                 <Route path="wellness" element={<WellnessPage />} />
+                <Route path="order-tracking" element={<OrderTrackingPage />} />
                 <Route
                   path="activity"
                   element={

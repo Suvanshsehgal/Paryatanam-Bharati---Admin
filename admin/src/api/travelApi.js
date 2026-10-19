@@ -59,4 +59,17 @@ export const travelApi = {
       return response.data;
     }
   },
+  // Tour bookings (admin order tracking)
+  getAdminBookings: async (params = {}) => {
+    const response = await apiClient.get('/admin/travel/bookings', { params });
+    const resData = response.data;
+    if (Array.isArray(resData)) return resData;
+    if (Array.isArray(resData?.data)) return resData.data;
+    return [];
+  },
+
+  updateBookingStatus: async (bookingId, status) => {
+    const response = await apiClient.patch(`/admin/travel/bookings/${bookingId}/status`, { status });
+    return response.data;
+  },
 };
