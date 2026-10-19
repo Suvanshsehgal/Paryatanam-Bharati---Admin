@@ -520,7 +520,7 @@ export const MarketplacePage = () => {
                               }`}
                               title="Show this product in Featured on the Marketplace home"
                             >
-                              {product?.is_featured ? 'Featured' : 'Feature'}
+                              {merchandiseMutation.isPending && <Loader2 className="inline w-2.5 h-2.5 mr-1 animate-spin" />}{product?.is_featured ? 'Featured' : 'Feature'}
                             </button>
                             <button
                               onClick={() =>
@@ -537,7 +537,7 @@ export const MarketplacePage = () => {
                               }`}
                               title="Show this product in Daily Essentials on the Marketplace home"
                             >
-                              {product?.is_daily_essential ? 'Daily Essential' : 'Mark Essential'}
+                              {merchandiseMutation.isPending && <Loader2 className="inline w-2.5 h-2.5 mr-1 animate-spin" />}{product?.is_daily_essential ? 'Daily Essential' : 'Mark Essential'}
                             </button>
                           </div>
                         </div>

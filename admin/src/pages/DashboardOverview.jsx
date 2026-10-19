@@ -201,7 +201,7 @@ export const DashboardOverview = () => {
                   className="flex items-center space-x-3 p-2.5 rounded-xl bg-zinc-50/60 dark:bg-slate-800/40 border border-zinc-100 dark:border-slate-800"
                 >
                   <img
-                    src={tour.cover_image}
+                    src={tour.cover_image_url}
                     alt={tour.title}
                     className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
                   />

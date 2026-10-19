@@ -221,7 +221,7 @@ export const PrasadPage = () => {
               disabled={publishOfferingMutation.isPending}
               className="px-2.5 py-1 text-xs font-bold rounded-lg text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 transition-colors border border-emerald-200 dark:border-emerald-800/60"
             >
-              Publish
+              {publishOfferingMutation.isPending && <Loader2 className="inline w-3 h-3 mr-1 animate-spin" />}Publish
             </button>
           )}
         </div>
@@ -370,7 +370,7 @@ export const PrasadPage = () => {
                             disabled={publishTempleMutation.isPending}
                             className="px-2 py-1 text-[10px] font-bold rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors"
                           >
-                            Publish
+                            {publishTempleMutation.isPending && <Loader2 className="inline w-3 h-3 mr-1 animate-spin" />}Publish
                           </button>
                         )}
                       </div>

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { getAdapter } from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://paryatanam-bharati-backend.onrender.com/api/v1';
@@ -10,6 +10,28 @@ export const apiClient = axios.create({
   },
   timeout: 15000,
 });
+
+// A double click on a save/create button fires the same write twice. While the
+// first identical write is still running, the second one shares its result, so
+// the server records the change only once. Uploads (FormData) are never shared.
+const WRITE_METHODS = ['post', 'put', 'patch', 'delete'];
+const inFlightWrites = new Map();
+const baseAdapter = getAdapter(apiClient.defaults.adapter);
+
+apiClient.defaults.adapter = (config) => {
+  const method = (config.method || 'get').toLowerCase();
+  if (!WRITE_METHODS.includes(method) || config.data instanceof FormData) {
+    return baseAdapter(config);
+  }
+  const body = typeof config.data === 'string' ? config.data : JSON.stringify(config.data ?? null);
+  const key = [method, config.baseURL, config.url, body, JSON.stringify(config.params ?? null)].join('|');
+  if (inFlightWrites.has(key)) {
+    return inFlightWrites.get(key);
+  }
+  const pending = baseAdapter(config).finally(() => inFlightWrites.delete(key));
+  inFlightWrites.set(key, pending);
+  return pending;
+};
 
 const READ_ONLY_METHODS = ['get', 'head', 'options'];
 

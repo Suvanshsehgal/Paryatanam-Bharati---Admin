@@ -320,7 +320,7 @@ export const TravelPage = () => {
               {tours.map((tour) => {
                 const coverImg =
                   tour.primary_image_url ||
-                  tour.cover_image ||
+                  tour.cover_image_url ||
                   (tour.media && tour.media[0] ? tour.media[0].file_path : null);
 
                 const priceVal = tour.base_price ?? tour.price ?? 0;
@@ -382,7 +382,7 @@ export const TravelPage = () => {
                           disabled={approveTourMutation.isPending}
                           className="px-4 py-1.5 text-xs font-bold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm flex items-center space-x-1.5 transition-colors"
                         >
-                          <CheckCircle2 className="w-4 h-4" />
+                          {approveTourMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                           <span>Approve & Publish</span>
                         </button>
                       )}
@@ -393,7 +393,7 @@ export const TravelPage = () => {
                           disabled={rejectTourMutation.isPending}
                           className="px-4 py-1.5 text-xs font-bold rounded-xl text-white bg-rose-600 hover:bg-rose-700 shadow-sm flex items-center space-x-1.5 transition-colors"
                         >
-                          <XCircle className="w-4 h-4" />
+                          {rejectTourMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                           <span>Reject</span>
                         </button>
                       )}

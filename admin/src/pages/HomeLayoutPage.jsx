@@ -437,7 +437,7 @@ export const HomeLayoutPage = () => {
           action_target: `/travel/tours/${slug}`,
           title: prev.title || tour.title,
           subtitle: prev.subtitle || `Operator: ${tour.operator_name}`,
-          image_url: prev.image_url || tour.cover_image,
+          image_url: prev.image_url || tour.cover_image_url,
         }));
       }
     } else if (actionType === 'CATEGORY') {
