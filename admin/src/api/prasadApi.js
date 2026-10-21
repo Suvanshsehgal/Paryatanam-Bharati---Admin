@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { normalizePrasadOrdersResponse, prasadOrdersParams } from '../utils/prasadOrders';
 
 export const prasadApi = {
   getTemples: async () => {
@@ -55,16 +56,14 @@ export const prasadApi = {
     }
   },
 
-  getPrasadOrders: async ({ status = '' } = {}) => {
-    try {
-      const response = await apiClient.get('/admin/prasad/bookings', {
-        params: { status: status && status !== 'ALL' ? status : undefined },
-      });
-      return response.data?.data || [];
-    } catch (err) {
-      if (err.status === 404) return [];
-      throw err;
-    }
+  // Prasad bookings (GET /admin/prasad/bookings, Admin only). Returns the rows
+  // with the server's pagination metadata; failures are thrown so the page can
+  // show an error instead of an empty (misleading) table.
+  getPrasadOrders: async ({ status = 'ALL', page = 1, limit = 10 } = {}) => {
+    const response = await apiClient.get('/admin/prasad/bookings', {
+      params: prasadOrdersParams({ status, page, limit }),
+    });
+    return normalizePrasadOrdersResponse(response.data, { page, limit });
   },
 };
 

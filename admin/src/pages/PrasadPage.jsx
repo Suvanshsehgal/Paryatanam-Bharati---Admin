@@ -4,6 +4,7 @@ import { prasadApi } from '../api/prasadApi';
 import { useToast } from '../context/ToastContext';
 import { INDIAN_STATES } from '../utils/constants';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import { PRASAD_ORDER_STATUSES } from '../utils/prasadOrders';
 import { Modal } from '../components/common/Modal';
 import { DataTable } from '../components/common/DataTable';
 import { ImagePreviewUpload } from '../components/common/ImagePreviewUpload';
@@ -48,6 +49,8 @@ export const PrasadPage = () => {
 
   const [activeTab, setActiveTab] = useState('shrines');
   const [orderStatusFilter, setOrderStatusFilter] = useState('ALL');
+  const [orderPage, setOrderPage] = useState(1);
+  const [orderLimit, setOrderLimit] = useState(10);
 
   // Modals state
   const [isTempleModalOpen, setIsTempleModalOpen] = useState(false);
@@ -101,9 +104,16 @@ export const PrasadPage = () => {
     queryFn: () => prasadApi.getOfferings(),
   });
 
-  const { data: orders, isLoading: loadingOrders } = useQuery({
-    queryKey: ['prasadOrders', orderStatusFilter],
-    queryFn: () => prasadApi.getPrasadOrders({ status: orderStatusFilter }),
+  const {
+    data: ordersResult,
+    isLoading: loadingOrders,
+    isError: ordersFailed,
+    error: ordersError,
+    refetch: refetchOrders,
+  } = useQuery({
+    queryKey: ['prasadOrders', orderStatusFilter, orderPage, orderLimit],
+    queryFn: () => prasadApi.getPrasadOrders({ status: orderStatusFilter, page: orderPage, limit: orderLimit }),
+    enabled: activeTab === 'orders',
   });
 
   // Mutations
@@ -249,32 +259,41 @@ export const PrasadPage = () => {
           <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 text-xs font-bold">
             <User className="w-3.5 h-3.5" />
           </div>
-          <div>
-            <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{row?.user?.name || 'Customer'}</div>
+          <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{row?.user?.name || '—'}</div>
+        </div>
+      ),
+    },
+    {
+      header: 'Temple & Offering',
+      cell: (row) => (
+        <div>
+          <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{row?.offering?.name || '—'}</div>
+          <div className="text-[11px] text-slate-400">
+            {row?.temple ? [row.temple.name, row.temple.city].filter(Boolean).join(' • ') : '—'}
           </div>
         </div>
       ),
     },
     {
-      header: 'Center & Service',
-      cell: (row) => (
-        <div>
-          <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{row?.service?.name || 'Treatment Service'}</div>
-          <div className="text-[11px] text-slate-400">{row?.provider?.name || 'Wellness Center'}</div>
-        </div>
-      ),
-    },
-    {
-      header: 'Appointment Date',
+      header: 'Prasad Date',
       accessorKey: 'booking_date',
       cell: (row) => (
         <div className="text-xs text-slate-700 dark:text-slate-300">
           <div className="font-semibold flex items-center space-x-1">
             <Calendar className="w-3 h-3 text-orange-500" />
-            <span>{row?.booking_date || 'N/A'}</span>
+            <span>{row?.booking_date ? formatDate(row.booking_date) : '—'}</span>
           </div>
-          <div className="text-[10px] text-slate-400">{row?.start_time || 'Scheduled Slot'}{row?.end_time ? ` - ${row.end_time}` : ''}</div>
+          <div className="text-[10px] text-slate-400">Qty {row?.quantity ?? '—'}</div>
         </div>
+      ),
+    },
+    {
+      header: 'Amount',
+      accessorKey: 'total_amount',
+      cell: (row) => (
+        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+          {row?.total_amount != null ? formatCurrency(row.total_amount) : '—'}
+        </span>
       ),
     },
     {
@@ -437,10 +456,13 @@ export const PrasadPage = () => {
           {/* Filter Pills */}
           <div className="flex items-center space-x-2">
             <span className="text-xs font-semibold text-slate-500">Status:</span>
-            {['ALL', 'CONFIRMED', 'COMPLETED', 'CANCELLED'].map((st) => (
+            {['ALL', ...PRASAD_ORDER_STATUSES].map((st) => (
               <button
                 key={st}
-                onClick={() => setOrderStatusFilter(st)}
+                onClick={() => {
+                  setOrderStatusFilter(st);
+                  setOrderPage(1);
+                }}
                 className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                   orderStatusFilter === st
                     ? 'bg-orange-600 text-white shadow-sm'
@@ -452,13 +474,36 @@ export const PrasadPage = () => {
             ))}
           </div>
 
-          <DataTable
-            columns={orderColumns}
-            data={orders || []}
-            isLoading={loadingOrders}
-            emptyTitle="No orders found"
-            emptyDescription="No prasadam fulfillment orders matched your active filter."
-          />
+          {ordersFailed ? (
+            <div className="rounded-2xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-6 text-sm">
+              <p className="font-bold text-red-700 dark:text-red-300">Could not load Prasadam orders</p>
+              <p className="text-red-600 dark:text-red-400 mt-1">{ordersError?.message || 'Please try again.'}</p>
+              <button
+                onClick={() => refetchOrders()}
+                className="mt-3 px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white hover:bg-red-700"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <DataTable
+              columns={orderColumns}
+              data={ordersResult?.items || []}
+              pagination={ordersResult?.pagination || { page: orderPage, limit: orderLimit, total: 0, pages: 1 }}
+              onPageChange={setOrderPage}
+              onLimitChange={(n) => {
+                setOrderLimit(n);
+                setOrderPage(1);
+              }}
+              isLoading={loadingOrders}
+              emptyTitle="No Prasadam orders"
+              emptyDescription={
+                orderStatusFilter === 'ALL'
+                  ? 'No Divine Prasad bookings have been placed yet.'
+                  : `No ${orderStatusFilter.toLowerCase()} Prasad bookings.`
+              }
+            />
+          )}
         </div>
       )}
 

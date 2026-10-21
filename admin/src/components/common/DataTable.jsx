@@ -7,7 +7,9 @@ import { LoadingSkeleton } from './LoadingSkeleton';
 export const DataTable = ({
   columns = [],
   data = [],
-  pagination = { page: 1, limit: 10, total_records: 0, total_pages: 1 },
+  // Without server pagination the total comes from the rows shown (a default
+  // of total_records: 0 used to make every such table read "0 to 0 of 0").
+  pagination,
   onPageChange,
   onLimitChange,
   isLoading = false,
