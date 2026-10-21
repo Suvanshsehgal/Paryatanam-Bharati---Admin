@@ -336,7 +336,7 @@ export const WellnessPage = () => {
   const [statusBookItem, setStatusBookItem] = useState(null);
   const [targetStatus, setTargetStatus] = useState('CONFIRMED');
 
-  const { data: bookRes, isLoading: loadingBooks, isError: bookError, refetch: refetchBooks } = useQuery({
+  const { data: bookRes, isLoading: loadingBooks, isError: bookError, error: bookErr, refetch: refetchBooks } = useQuery({
     queryKey: ['wellnessBookings', bookPage, bookLimit, bookStatus, bookDate],
     queryFn: () =>
       wellnessApi.getAdminBookings({
@@ -1247,7 +1247,7 @@ export const WellnessPage = () => {
           {bookError ? (
             <ErrorState
               title="Failed to load platform bookings"
-              description="Unable to connect to the backend bookings endpoint."
+              description={bookErr?.detail || bookErr?.message || "Unable to load bookings. Check your connection and try again."}
               onRetry={refetchBooks}
             />
           ) : (
